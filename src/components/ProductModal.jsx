@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import * as api from '../api/supabaseApi';
 import { useLanguage } from '../i18n/LanguageContext';
 import { toast } from 'react-toastify';
+import { getProductImages } from '../utils/productImages';
 
-const ProductModal = ({ product, onClose, onAddToCart, onToggleFavourite, isFavourite }) => {
+const ProductModal = ({ product, onClose, onToggleFavourite, isFavourite }) => {
     const { t, language } = useLanguage();
     const [reviews, setReviews] = useState([]);
     const [averageRating, setAverageRating] = useState(0);
@@ -17,15 +18,10 @@ const ProductModal = ({ product, onClose, onAddToCart, onToggleFavourite, isFavo
         comment: ''
     });
     const [submitting, setSubmitting] = useState(false);
+    const [failedImageUrls, setFailedImageUrls] = useState([]);
 
-    if (!product) return null;
-
-    // Load reviews on mount
-    useEffect(() => {
-        loadReviews();
-    }, [product.id]);
-
-    const loadReviews = async () => {
+    const loadReviews = useCallback(async () => {
+        if (!product) return;
         try {
             setLoadingReviews(true);
             const reviewsData = await api.getProductReviews(product.id);
@@ -43,7 +39,14 @@ const ProductModal = ({ product, onClose, onAddToCart, onToggleFavourite, isFavo
         } finally {
             setLoadingReviews(false);
         }
-    };
+    }, [product]);
+
+    // Load reviews on mount
+    useEffect(() => {
+        loadReviews();
+    }, [loadReviews]);
+
+    if (!product) return null;
 
     const handleSubmitReview = async (e) => {
         e.preventDefault();
@@ -115,6 +118,10 @@ const ProductModal = ({ product, onClose, onAddToCart, onToggleFavourite, isFavo
         });
     };
 
+    const handleImageError = (url) => {
+        setFailedImageUrls((prev) => prev.includes(url) ? prev : [...prev, url]);
+    };
+
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onClick={onClose}>
             <div
@@ -147,21 +154,19 @@ const ProductModal = ({ product, onClose, onAddToCart, onToggleFavourite, isFavo
                             )}
 
                             {(() => {
-                                // Get images
-                                const images = product.images && product.images.length > 0
-                                    ? product.images
-                                    : product.image
-                                        ? [{ url: product.image, is_primary: true }]
-                                        : [];
+                                const images = getProductImages(product).filter((image) => !failedImageUrls.includes(image.url));
+                                const safeImageIndex = images.length > 0 ? currentImageIndex % images.length : 0;
+                                const currentImage = images[safeImageIndex];
 
                                 return (
                                     <div className="bg-gray-100 rounded-xl h-96 flex items-center justify-center relative group">
                                         {images.length > 0 ? (
                                             <>
                                                 <img
-                                                    src={images[currentImageIndex]?.url}
+                                                    src={currentImage?.url}
                                                     alt={product.name}
                                                     className="w-full h-full object-cover rounded-xl"
+                                                    onError={() => handleImageError(currentImage?.url)}
                                                 />
 
                                                 {/* Navigation if multiple images */}
@@ -195,7 +200,7 @@ const ProductModal = ({ product, onClose, onAddToCart, onToggleFavourite, isFavo
                                                                 <button
                                                                     key={index}
                                                                     onClick={() => setCurrentImageIndex(index)}
-                                                                    className={`w-16 h-16 rounded-lg overflow-hidden border-2 transition ${index === currentImageIndex
+                                                                    className={`w-16 h-16 rounded-lg overflow-hidden border-2 transition ${index === safeImageIndex
                                                                         ? 'border-white scale-110'
                                                                         : 'border-white/50 opacity-70 hover:opacity-100'
                                                                         }`}
@@ -204,6 +209,7 @@ const ProductModal = ({ product, onClose, onAddToCart, onToggleFavourite, isFavo
                                                                         src={img.url}
                                                                         alt={`Thumbnail ${index + 1}`}
                                                                         className="w-full h-full object-cover"
+                                                                        onError={() => handleImageError(img.url)}
                                                                     />
                                                                 </button>
                                                             ))}

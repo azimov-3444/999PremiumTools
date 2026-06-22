@@ -1,18 +1,22 @@
 import React, { useState } from 'react';
 import ProductModal from './ProductModal';
 import { useLanguage } from '../i18n/LanguageContext';
+import { getProductImages } from '../utils/productImages';
 
 const ProductCard = ({ product, onAddToCart, onToggleFavourite, isFavourite }) => {
     const [showModal, setShowModal] = useState(false);
     const { t, language } = useLanguage();
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
+    const [failedImageUrls, setFailedImageUrls] = useState([]);
 
-    // Get images array (fallback to single image)
-    const images = product.images && product.images.length > 0
-        ? product.images
-        : product.image
-            ? [{ url: product.image, is_primary: true }]
-            : [];
+    const images = getProductImages(product);
+    const visibleImages = images.filter((image) => !failedImageUrls.includes(image.url));
+    const safeImageIndex = visibleImages.length > 0 ? currentImageIndex % visibleImages.length : 0;
+    const currentImage = visibleImages[safeImageIndex];
+
+    const handleImageError = (url) => {
+        setFailedImageUrls((prev) => prev.includes(url) ? prev : [...prev, url]);
+    };
 
     // Rating yulduzchalarini ko'rsatish
     const renderStars = (rating) => {
@@ -74,24 +78,25 @@ const ProductCard = ({ product, onAddToCart, onToggleFavourite, isFavourite }) =
 
                 {/* Product Image Slider */}
                 <div className="bg-gray-100 h-48 flex items-center justify-center relative overflow-hidden group">
-                    {images.length > 0 ? (
+                    {visibleImages.length > 0 ? (
                         <>
                             <img
-                                src={images[currentImageIndex]?.url}
+                                src={currentImage?.url}
                                 alt={product.name}
                                 className="w-full h-full object-cover cursor-pointer"
                                 onClick={() => setShowModal(true)}
+                                onError={() => handleImageError(currentImage?.url)}
                             />
 
                             {/* Image Navigation */}
-                            {images.length > 1 && (
+                            {visibleImages.length > 1 && (
                                 <>
                                     {/* Previous Button */}
                                     <button
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             setCurrentImageIndex((prev) =>
-                                                prev === 0 ? images.length - 1 : prev - 1
+                                                prev === 0 ? visibleImages.length - 1 : prev - 1
                                             );
                                         }}
                                         className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
@@ -106,7 +111,7 @@ const ProductCard = ({ product, onAddToCart, onToggleFavourite, isFavourite }) =
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             setCurrentImageIndex((prev) =>
-                                                prev === images.length - 1 ? 0 : prev + 1
+                                                prev === visibleImages.length - 1 ? 0 : prev + 1
                                             );
                                         }}
                                         className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
@@ -118,14 +123,14 @@ const ProductCard = ({ product, onAddToCart, onToggleFavourite, isFavourite }) =
 
                                     {/* Dots Indicator */}
                                     <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
-                                        {images.map((_, index) => (
+                                        {visibleImages.map((_, index) => (
                                             <button
                                                 key={index}
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     setCurrentImageIndex(index);
                                                 }}
-                                                className={`w-1.5 h-1.5 rounded-full transition-all ${index === currentImageIndex
+                                                className={`w-1.5 h-1.5 rounded-full transition-all ${index === safeImageIndex
                                                     ? 'bg-white w-3'
                                                     : 'bg-white/50'
                                                     }`}

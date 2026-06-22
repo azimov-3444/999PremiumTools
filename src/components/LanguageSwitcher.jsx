@@ -16,13 +16,14 @@ const LanguageSwitcher = () => {
     return (
         <div className="relative">
             <button
-                onClick={() => setIsOpen(!isOpen)}
-                className="flex items-center gap-1 px-3 py-2 rounded-lg hover:bg-gray-100 transition"
+                disabled
+                title="Vaqtinchalik o'chirilgan"
+                className="flex items-center gap-1 px-3 py-2 rounded-lg opacity-50 cursor-not-allowed transition bg-gray-50"
             >
-                <span className="text-sm font-bold text-gray-700">
+                <span className="text-sm font-bold text-gray-500">
                     {currentLang.code.toUpperCase()}
                 </span>
-                <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
             </button>
