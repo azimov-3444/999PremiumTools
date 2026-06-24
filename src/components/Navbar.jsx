@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import LanguageSwitcher from './LanguageSwitcher';
 import { useLanguage } from '../i18n/LanguageContext';
 
-const Navbar = ({ currentUser, onLogout, onNavigate, cartCount, favouritesCount }) => {
+const Navbar = ({ currentUser, onLogout, onNavigate, favouritesCount }) => {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const { t } = useLanguage();
 
@@ -20,7 +20,7 @@ const Navbar = ({ currentUser, onLogout, onNavigate, cartCount, favouritesCount 
                         className="text-xl md:text-2xl font-bold text-primary cursor-pointer hover:opacity-80 transition"
                         onClick={() => handleNavigation('')}
                     >
-                        999 Premium Tools
+                        {t.navbar.logo}
                     </div>
 
                     {/* Desktop Navigation */}

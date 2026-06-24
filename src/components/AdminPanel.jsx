@@ -81,7 +81,61 @@ const AdminPanel = ({
     const [bannerSelectedCategory, setBannerSelectedCategory] = useState('');
     const [bannerSelectedProduct, setBannerSelectedProduct] = useState('');
 
-    const handleBannerImageUpload = (e) => {
+    const readFileAsDataUrl = (file) => new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+
+    const loadImageFromDataUrl = (dataUrl) => new Promise((resolve, reject) => {
+        const image = new Image();
+        image.onload = () => resolve(image);
+        image.onerror = reject;
+        image.src = dataUrl;
+    });
+
+    const compressBannerPreview = async (file) => {
+        const originalDataUrl = await readFileAsDataUrl(file);
+
+        try {
+            const image = await loadImageFromDataUrl(originalDataUrl);
+            const attempts = [
+                { width: 1200, height: 520, quality: 0.68 },
+                { width: 900, height: 390, quality: 0.55 },
+                { width: 720, height: 310, quality: 0.45 },
+                { width: 600, height: 260, quality: 0.35 }
+            ];
+            const maxSafeLength = 75000;
+            let compressedDataUrl = originalDataUrl;
+
+            for (const attempt of attempts) {
+                const scale = Math.min(attempt.width / image.width, attempt.height / image.height, 1);
+                const width = Math.max(1, Math.round(image.width * scale));
+                const height = Math.max(1, Math.round(image.height * scale));
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, width, height);
+                ctx.drawImage(image, 0, 0, width, height);
+                compressedDataUrl = canvas.toDataURL('image/webp', attempt.quality);
+
+                if (compressedDataUrl.length <= maxSafeLength) {
+                    break;
+                }
+            }
+
+            return compressedDataUrl;
+        } catch (error) {
+            console.warn("Banner preview siqilmadi, asl preview ishlatilmoqda:", error);
+            return originalDataUrl;
+        }
+    };
+
+    const handleBannerImageUpload = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
 
@@ -91,15 +145,17 @@ const AdminPanel = ({
             return;
         }
 
-        const reader = new FileReader();
-        reader.onloadend = () => {
+        try {
+            const previewImage = await compressBannerPreview(file);
             if (editingBanner) {
-                setEditingBanner({ ...editingBanner, image: reader.result, file: file });
+                setEditingBanner(prev => prev ? ({ ...prev, image: previewImage, file: file }) : null);
             } else {
-                setNewBanner({ ...newBanner, image: reader.result, file: file });
+                setNewBanner(prev => ({ ...prev, image: previewImage, file: file }));
             }
-        };
-        reader.readAsDataURL(file);
+        } catch (error) {
+            console.error("Banner rasmini o'qishda xatolik:", error);
+            toast.error(t.common.error + ": " + (error.message || t.admin.saveError));
+        }
     };
 
     // Update link based on selection
@@ -153,15 +209,26 @@ const AdminPanel = ({
         }
     };
 
+    const uploadBannerImage = async (file, fallbackImage) => {
+        try {
+            return await uploadImage(file, 'banners');
+        } catch (error) {
+            console.warn("Banner rasmi Supabase'ga yuklanmadi, vaqtincha preview rasm saqlanmoqda:", error);
+            if (typeof fallbackImage === 'string' && fallbackImage.startsWith('data:image/')) {
+                return fallbackImage;
+            }
+            throw error;
+        }
+    };
+
     const handleAddBanner = async (e) => {
         e.preventDefault();
         try {
             if (newBanner.image) {
                 let imageUrl = newBanner.image;
 
-                // Upload to banners bucket if file exists
                 if (newBanner.file) {
-                    imageUrl = await uploadImage(newBanner.file, 'banners');
+                    imageUrl = await uploadBannerImage(newBanner.file, newBanner.image);
                 }
 
                 await onAddCarouselItem({
@@ -180,7 +247,7 @@ const AdminPanel = ({
 
                 // Clear state ONLY on success
                 setNewBanner({
-                    image: '', link: '',
+                    image: '', file: null, link: '',
                     titleUz: '', titleRu: '', titleEn: '',
                     descriptionUz: '', descriptionRu: '', descriptionEn: '',
                     buttonTextUz: '', buttonTextRu: '', buttonTextEn: ''
@@ -204,14 +271,14 @@ const AdminPanel = ({
         try {
             let imageUrl = editingBanner.image;
 
-            // Upload new image if it's a file
             if (editingBanner.file) {
-                imageUrl = await uploadImage(editingBanner.file, 'banners');
+                imageUrl = await uploadBannerImage(editingBanner.file, editingBanner.image);
             }
 
             await onUpdateCarouselItem(editingBanner.id, {
                 ...editingBanner,
-                image: imageUrl
+                image: imageUrl,
+                file: undefined
             });
 
             setEditingBanner(null);

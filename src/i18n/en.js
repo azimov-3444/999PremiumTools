@@ -309,6 +309,50 @@ export const en = {
         empty: "Favorites list is empty"
     },
 
+    // Landing Page
+    landing: {
+        heroTitle: "Premium Jewelry Equipment & Professional Tools",
+        heroSubtitle: "We supply the latest technologies, tools, and high-precision premium equipment to jewelry workshops and manufacturers.",
+        badge: "Premium jewelry tools center",
+        consultation: "Get Consultation",
+        exploreCatalog: "Explore Catalog",
+        statsTitle: "Our Achievements",
+        statsSubtitle: "Years of experience and trust of thousands of our happy customers",
+        experienceYears: "20+",
+        experienceTitle: "Years of Experience",
+        experienceText: "Proven market knowledge and a professional approach",
+        happyCustomers: "50,000+",
+        customersTitle: "Happy Customers",
+        customersText: "Trusted by workshops and manufacturers",
+        productsCount: "1,500+",
+        productsTitle: "Products Catalog",
+        productsText: "A wide premium range for precise work",
+        quickNav: "Quick Navigation",
+        categoriesTitle: "Popular Categories",
+        categoriesSubtitle: "All necessary equipment and tools for the jewelry industry",
+        viewAllCategories: "All Categories",
+        openCategory: "Open Category",
+        bestSellersKicker: "Customer Choice",
+        bestSellersTitle: "Best Selling Products",
+        bestSellersSubtitle: "Highly rated by our clients and the most popular equipment",
+        advantagesKicker: "Advantages",
+        whyTitle: "Why Choose Us?",
+        whySubtitle: "We guarantee the best quality, prices, and services for our customers",
+        features: {
+            quality: "Guaranteed Quality",
+            qualityText: "All our equipment is fully tested and conforms to international quality standards.",
+            shipping: "Fast Delivery",
+            shippingText: "Safe and rapid shipping system across Tashkent and all regions.",
+            support: "24/7 Professional Support",
+            supportText: "Get free consultation from our experts regarding selection, setup, and operations.",
+            warranty: "Official Warranty",
+            warrantyText: "An official warranty of 1 to 2 years is provided for all our premium products."
+        },
+        bottomTitle: "Grow Your Business with Professional Equipment",
+        bottomSubtitle: "Browse our catalog, select the right tools, and take your business efficiency to the next level.",
+        enterStore: "Go to Catalog"
+    },
+
     // Common
     common: {
         search: "Search...",

@@ -1,22 +1,20 @@
 import { useState, useEffect, useMemo } from 'react';
-import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
 import * as api from './api/supabaseApi';
-import { hashPassword, verifyPassword } from './utils/passwordUtils';
+import { hashPassword } from './utils/passwordUtils';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
-import Home from './components/Home';
+import Landing from './components/Landing';
 import Catalog from './components/Catalog';
 import Favourites from './components/Favourites';
 import Login from './components/Login';
 import AdminPanel from './components/AdminPanel';
 import About from './components/About';
 import Contact from './components/Contact';
-import { useLanguage } from './i18n/LanguageContext';
 import { toast } from 'react-toastify';
 
 function AppContent() {
   const navigate = useNavigate();
-  const location = useLocation();
 
   // State
   const [currentUser, setCurrentUser] = useState(null);
@@ -259,18 +257,6 @@ function AppContent() {
     }
   };
 
-  // Admin: Update product discount
-  const handleUpdateProductDiscount = async (productId, discount) => {
-    try {
-      const updatedProduct = await api.updateProductDiscount(productId, discount);
-      setProducts(products.map(product =>
-        product.id === productId ? updatedProduct : product
-      ));
-    } catch (error) {
-      console.error('Error updating discount:', error);
-    }
-  };
-
   // Admin: Update category
   const handleUpdateCategory = async (categoryId, categoryData) => {
     try {
@@ -387,7 +373,7 @@ function AppContent() {
         <Route
           path="/"
           element={
-            <Home
+            <Landing
               products={productsWithReviews}
               categories={categories}
               onToggleFavourite={handleToggleFavourite}

@@ -314,6 +314,50 @@ export const uz = {
         empty: "Sevimlilar ro'yxati bo'sh"
     },
 
+    // Landing Page
+    landing: {
+        heroTitle: "Premium Zargarlik Uskunalari va Professional Asboblar",
+        heroSubtitle: "Biz zargarlik ustaxonalari va ishlab chiqaruvchilarga eng so'nggi texnologiyalar, asboblar va yuqori aniqlikdagi premium uskunalarni yetkazib beramiz.",
+        badge: "Premium zargarlik asboblari markazi",
+        consultation: "Maslahat olish",
+        exploreCatalog: "Katalogga o'tish",
+        statsTitle: "Bizning Yutuqlarimiz",
+        statsSubtitle: "Yillar davomida to'plangan tajriba va minglab mamnun mijozlarimiz ishonchi",
+        experienceYears: "20+",
+        experienceTitle: "Yillik Tajriba",
+        experienceText: "Bozorda sinalgan bilim va professional yondashuv",
+        happyCustomers: "50,000+",
+        customersTitle: "Mamnun Mijozlar",
+        customersText: "Ustaxonalar va ishlab chiqaruvchilar ishonchi",
+        productsCount: "1,500+",
+        productsTitle: "Mahsulot Turlari",
+        productsText: "Aniq ish uchun keng assortiment va premium tanlov",
+        quickNav: "Tezkor navigatsiya",
+        categoriesTitle: "Ommabop Kategoriyalar",
+        categoriesSubtitle: "Zargarlik sanoati uchun zarur bo'lgan barcha jihozlar va asboblar",
+        viewAllCategories: "Barcha kategoriyalar",
+        openCategory: "Kategoriyani ochish",
+        bestSellersKicker: "Mijozlar tanlovi",
+        bestSellersTitle: "Eng Xaridorgir Mahsulotlar",
+        bestSellersSubtitle: "Mijozlarimiz tomonidan yuqori baholangan va eng ko'p sotiladigan jihozlar",
+        advantagesKicker: "Afzalliklar",
+        whyTitle: "Nega Aynan Bizni Tanlashadi?",
+        whySubtitle: "Biz mijozlarimizga eng yaxshi sifat, narx va servis xizmatlarini kafolatlaymiz",
+        features: {
+            quality: "Kafolatlangan Sifat",
+            qualityText: "Barcha uskunalarimiz sinovdan o'tgan va xalqaro sifat standartlariga to'liq mos keladi.",
+            shipping: "Tez Yetkazib Berish",
+            shippingText: "Toshkent shahri va barcha viloyatlar bo'ylab xavfsiz va tezkor yetkazib berish tizimi.",
+            support: "24/7 Professional Yordam",
+            supportText: "Uskunalarni tanlash, sozlash va ishlatish bo'yicha mutaxassislarimizdan bepul maslahat oling.",
+            warranty: "Rasmiy Kafolat",
+            warrantyText: "Barcha premium mahsulotlarimiz uchun 1 yildan 2 yilgacha bo'lgan rasmiy kafolat taqdim etiladi."
+        },
+        bottomTitle: "Ishingizni Professional Uskunalar bilan Rivojlantiring",
+        bottomSubtitle: "Katalogimizni ko'ring, mos jihozlarni tanlang va o'z faoliyatingiz samaradorligini yangi bosqichga ko'taring.",
+        enterStore: "Katalogga o'tish"
+    },
+
     // Common
     common: {
         search: "Qidirish...",
