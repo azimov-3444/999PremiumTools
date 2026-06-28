@@ -284,10 +284,10 @@ export const en = {
         location: {
             title: "Our Store Location",
             howToGet: "🚗 How to Get There?",
-            metro: "Metro: Chilonzor station (5 min walk)",
-            bus: "Bus: routes 23, 45, 78",
-            taxi: "Taxi: \"Chilonzor\", near Katta Bozor",
-            car: "By car: Free parking available"
+            metro: "Metro: Chilonzor station (about 1.5 km, 15-20 minutes on foot or a short taxi ride)",
+            bus: "Bus: check the route in Google Maps/Yandex Maps to the \"999 PREMIUM Tools\" location",
+            taxi: "Taxi: enter \"999 PREMIUM Tools\" or \"Chilanzar 12th Quarter, Building 1\"",
+            car: "By car: follow the Google Maps location and check parking on arrival"
         },
         social: "Social Media"
     },

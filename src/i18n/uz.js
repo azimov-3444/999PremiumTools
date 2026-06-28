@@ -289,10 +289,10 @@ export const uz = {
         location: {
             title: "Bizning Do'kon Joylashuvi",
             howToGet: "🚗 Qanday Yetib Borish Mumkin?",
-            metro: "Metro: Chilonzor bekati (5 daqiqa piyoda)",
-            bus: "Avtobus: 23, 45, 78-raqamli marshrutlar",
-            taxi: "Taksi: \"Chilonzor\", Katta Bozor yonida",
-            car: "Mashinada: Bepul to'xtash joyi mavjud"
+            metro: "Metro: Chilonzor bekati (taxminan 1.5 km, 15-20 daqiqa piyoda yoki qisqa taksi)",
+            bus: "Avtobus: yo'nalishni Google Maps/Yandex Maps orqali \"999 PREMIUM Tools\" lokatsiyasiga qarab tekshiring",
+            taxi: "Taksi: \"999 PREMIUM Tools\" yoki \"Chilonzor 12-kvartal, 1-dom\" deb kiriting",
+            car: "Mashinada: Google Maps lokatsiyasi bo'yicha keling, parkingni joyida tekshiring"
         },
         social: "Ijtimoiy Tarmoqlar"
     },
