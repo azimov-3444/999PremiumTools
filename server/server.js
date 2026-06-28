@@ -243,6 +243,32 @@ app.get('/api/reviews', async (req, res) => {
     }
 });
 
+app.get('/api/reviews/summary', async (req, res) => {
+    try {
+        const summaries = await Review.aggregate([
+            {
+                $group: {
+                    _id: "$product_id",
+                    reviewCount: { $sum: 1 },
+                    rating: { $avg: "$rating" }
+                }
+            },
+            {
+                $project: {
+                    _id: 0,
+                    product_id: "$_id",
+                    reviewCount: 1,
+                    rating: 1
+                }
+            }
+        ]);
+
+        res.json(summaries);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 app.get('/api/reviews/product/:id', async (req, res) => {
     try {
         const reviews = await Review.find({ product_id: Number(req.params.id) }).sort({ created_at: -1 });

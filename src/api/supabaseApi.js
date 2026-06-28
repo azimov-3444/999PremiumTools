@@ -323,6 +323,31 @@ export const getAllReviews = async () => {
     return res.data;
 };
 
+export const getReviewSummaries = async () => {
+    try {
+        const res = await api.get('/reviews/summary');
+        return res.data;
+    } catch (error) {
+        console.warn('Falling back to full reviews for summaries:', error);
+        const reviews = await getAllReviews();
+        const summaryMap = new Map();
+
+        reviews.forEach((review) => {
+            const productId = Number(review.product_id);
+            const current = summaryMap.get(productId) || { product_id: productId, reviewCount: 0, ratingTotal: 0 };
+            current.reviewCount += 1;
+            current.ratingTotal += Number(review.rating) || 0;
+            summaryMap.set(productId, current);
+        });
+
+        return Array.from(summaryMap.values()).map((summary) => ({
+            product_id: summary.product_id,
+            reviewCount: summary.reviewCount,
+            rating: summary.reviewCount > 0 ? summary.ratingTotal / summary.reviewCount : 0
+        }));
+    }
+};
+
 export const addReview = async (reviewData) => {
     const res = await api.post('/reviews', {
         product_id: reviewData.productId,

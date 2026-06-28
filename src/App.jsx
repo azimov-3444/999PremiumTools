@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo } from 'react';
-import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
+import { lazy, Suspense, useState, useEffect, useMemo } from 'react';
+import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import * as api from './api/supabaseApi';
 import { hashPassword } from './utils/passwordUtils';
 import Navbar from './components/Navbar';
@@ -8,13 +8,33 @@ import Landing from './components/Landing';
 import Catalog from './components/Catalog';
 import Favourites from './components/Favourites';
 import Login from './components/Login';
-import AdminPanel from './components/AdminPanel';
 import About from './components/About';
 import Contact from './components/Contact';
 import { toast } from 'react-toastify';
 
+const AdminPanel = lazy(() => import('./components/AdminPanel'));
+
+const buildReviewSummaries = (reviewList) => {
+  const summaryMap = new Map();
+
+  reviewList.forEach((review) => {
+    const productId = Number(review.product_id);
+    const current = summaryMap.get(productId) || { product_id: productId, reviewCount: 0, ratingTotal: 0 };
+    current.reviewCount += 1;
+    current.ratingTotal += Number(review.rating) || 0;
+    summaryMap.set(productId, current);
+  });
+
+  return Array.from(summaryMap.values()).map((summary) => ({
+    product_id: summary.product_id,
+    reviewCount: summary.reviewCount,
+    rating: summary.reviewCount > 0 ? summary.ratingTotal / summary.reviewCount : 0
+  }));
+};
+
 function AppContent() {
   const navigate = useNavigate();
+  const location = useLocation();
 
   // State
   const [currentUser, setCurrentUser] = useState(null);
@@ -29,50 +49,90 @@ function AppContent() {
     pageViews: []
   });
   const [reviews, setReviews] = useState([]);
+  const [reviewSummaries, setReviewSummaries] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [adminDataLoaded, setAdminDataLoaded] = useState(false);
 
   // Load data from Supabase on mount
   useEffect(() => {
-    loadAllData();
-
     // Load user from localStorage (session)
     const savedUser = localStorage.getItem('currentUser');
     if (savedUser) {
-      setCurrentUser(JSON.parse(savedUser));
+      try {
+        setCurrentUser(JSON.parse(savedUser));
+      } catch (error) {
+        console.error('Saved user is invalid:', error);
+        localStorage.removeItem('currentUser');
+      }
     }
 
     // Load favourites from localStorage
     const savedFavourites = localStorage.getItem('favourites');
     if (savedFavourites) setFavourites(JSON.parse(savedFavourites));
+
+    loadPublicData();
   }, []);
+
+  useEffect(() => {
+    const allowedRoles = ['moderator', 'admin', 'super_admin'];
+    const shouldLoadAdminData =
+      location.pathname === '/admin' &&
+      currentUser &&
+      allowedRoles.includes(currentUser.role) &&
+      !adminDataLoaded;
+
+    if (shouldLoadAdminData) {
+      loadAdminData();
+    }
+  }, [adminDataLoaded, currentUser, location.pathname]);
 
   useEffect(() => {
     localStorage.setItem('favourites', JSON.stringify(favourites));
   }, [favourites]);
 
-  // Load all data from Supabase
-  const loadAllData = async () => {
+  // Load only storefront data on initial page load.
+  const loadPublicData = async () => {
     try {
       setLoading(true);
-      const [categoriesData, productsData, carouselData, usersData, statsData, reviewsData] = await Promise.all([
+      const [categoriesData, productsData, carouselData] = await Promise.all([
         api.getAllCategories(),
         api.getAllProducts(),
-        api.getAllCarouselItems(),
-        api.getAllUsers(),
-        api.getVisitStats(),
-        api.getAllReviews()
+        api.getAllCarouselItems()
       ]);
 
       setCategories(categoriesData);
       setProducts(productsData);
       setCarouselItems(carouselData);
-      setUsers(usersData);
-      setVisitStats(statsData);
-      setReviews(reviewsData);
+
+      try {
+        const reviewSummariesData = await api.getReviewSummaries();
+        setReviewSummaries(reviewSummariesData);
+      } catch (summaryError) {
+        console.warn('Review summaries failed to load:', summaryError);
+        setReviewSummaries([]);
+      }
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Load heavier/sensitive data only after an admin opens the admin panel.
+  const loadAdminData = async () => {
+    try {
+      const [usersData, statsData, reviewsData] = await Promise.all([
+        api.getAllUsers(),
+        api.getVisitStats(),
+        api.getAllReviews()
+      ]);
+
+      setUsers(usersData);
+      setVisitStats(statsData);
+      setReviews(reviewsData);
+      setAdminDataLoaded(true);
+    } catch (error) {
+      console.error('Error loading admin data:', error);
     }
   };
 
@@ -88,13 +148,14 @@ function AppContent() {
         });
 
         setCurrentUser(newUser);
+        setAdminDataLoaded(false);
         localStorage.setItem('currentUser', JSON.stringify(newUser));
-        await loadAllData(); // Reload users
         navigate('/');
         return true;
       } else {
         const user = await api.loginUser(formData.email, hashPassword(formData.password));
         setCurrentUser(user);
+        setAdminDataLoaded(false);
         localStorage.setItem('currentUser', JSON.stringify(user));
         navigate('/');
         return true;
@@ -108,6 +169,13 @@ function AppContent() {
   // Handle logout
   const handleLogout = () => {
     setCurrentUser(null);
+    setUsers([]);
+    setVisitStats({
+      totalVisits: 0,
+      uniqueVisitors: [],
+      pageViews: []
+    });
+    setAdminDataLoaded(false);
     localStorage.removeItem('currentUser');
     navigate('/');
   };
@@ -249,7 +317,7 @@ function AppContent() {
           Number(p.id) === numericId ? updatedProduct : p
         ));
         // Bazadan yangi ma'lumotlarni qaytadan yuklash
-        await loadAllData();
+        await loadPublicData();
       }
     } catch (error) {
       console.error('App.jsx update error:', error);
@@ -272,7 +340,9 @@ function AppContent() {
   const handleDeleteReview = async (reviewId) => {
     try {
       await api.deleteReview(reviewId);
-      setReviews(reviews.filter(r => r.id !== reviewId));
+      const nextReviews = reviews.filter(r => r.id !== reviewId);
+      setReviews(nextReviews);
+      setReviewSummaries(buildReviewSummaries(nextReviews));
     } catch (error) {
       console.error('Error deleting review:', error);
     }
@@ -333,35 +403,30 @@ function AppContent() {
 
   // Enrich products with review data
   const productsWithReviews = useMemo(() => {
+    const summaryByProductId = new Map(
+      reviewSummaries.map((summary) => [Number(summary.product_id), summary])
+    );
+
     return products.map(product => {
-      const productReviews = reviews.filter(r => r.product_id === product.id);
-      const reviewCount = productReviews.length;
-      const averageRating = reviewCount > 0
-        ? productReviews.reduce((sum, r) => sum + r.rating, 0) / reviewCount
-        : 0;
+      const summary = summaryByProductId.get(Number(product.id));
 
       return {
         ...product,
-        reviewCount,
-        rating: averageRating
+        reviewCount: summary?.reviewCount || 0,
+        rating: summary?.rating || 0
       };
     });
-  }, [products, reviews]);
+  }, [products, reviewSummaries]);
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-gray-600">Yuklanmoqda...</p>
-        </div>
-      </div>
+      <LoadingScreen />
     );
   }
 
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[linear-gradient(180deg,#f8fafc_0%,#eef2f7_45%,#ffffff_100%)] pb-20 lg:pb-0">
       <Navbar
         currentUser={currentUser}
         onLogout={handleLogout}
@@ -421,30 +486,32 @@ function AppContent() {
           path="/admin"
           element={
             <ProtectedAdminRoute>
-              <AdminPanel
-                categories={categories}
-                products={products}
-                users={users}
-                onAddCategory={handleAddCategory}
-                onDeleteCategory={handleDeleteCategory}
-                onUpdateCategory={handleUpdateCategory}
-                onAddProduct={handleAddProduct}
-                onUpdateUserRole={handleUpdateUserRole}
-                onDeleteProduct={handleDeleteProduct}
-                onUpdateProductStock={handleUpdateProductStock}
-                onUpdateProductCategory={handleUpdateProductCategory}
-                onUpdateProductBestSeller={handleUpdateProductBestSeller}
-                onUpdateProduct={handleUpdateProduct}
-                carouselItems={carouselItems}
-                onAddCarouselItem={handleAddCarouselItem}
-                onDeleteCarouselItem={handleDeleteCarouselItem}
-                onUpdateCarouselItem={handleUpdateCarouselItem}
-                reviews={reviews}
-                onDeleteReview={handleDeleteReview}
-                visitStats={visitStats}
-                currentUser={currentUser}
-                onUpdatePassword={handleUpdatePassword}
-              />
+              <Suspense fallback={<LoadingScreen />}>
+                <AdminPanel
+                  categories={categories}
+                  products={products}
+                  users={users}
+                  onAddCategory={handleAddCategory}
+                  onDeleteCategory={handleDeleteCategory}
+                  onUpdateCategory={handleUpdateCategory}
+                  onAddProduct={handleAddProduct}
+                  onUpdateUserRole={handleUpdateUserRole}
+                  onDeleteProduct={handleDeleteProduct}
+                  onUpdateProductStock={handleUpdateProductStock}
+                  onUpdateProductCategory={handleUpdateProductCategory}
+                  onUpdateProductBestSeller={handleUpdateProductBestSeller}
+                  onUpdateProduct={handleUpdateProduct}
+                  carouselItems={carouselItems}
+                  onAddCarouselItem={handleAddCarouselItem}
+                  onDeleteCarouselItem={handleDeleteCarouselItem}
+                  onUpdateCarouselItem={handleUpdateCarouselItem}
+                  reviews={reviews}
+                  onDeleteReview={handleDeleteReview}
+                  visitStats={visitStats}
+                  currentUser={currentUser}
+                  onUpdatePassword={handleUpdatePassword}
+                />
+              </Suspense>
             </ProtectedAdminRoute>
           }
         />
@@ -462,6 +529,17 @@ function AppContent() {
 
       <Footer categories={categories} />
     </div>
+  );
+}
+
+function LoadingScreen() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-[linear-gradient(180deg,#f8fafc_0%,#eef2f7_100%)]">
+        <div className="text-center">
+          <div className="mx-auto mb-4 h-16 w-16 animate-spin rounded-full border-4 border-red-100 border-b-primary"></div>
+          <p className="font-bold text-gray-600">Yuklanmoqda...</p>
+        </div>
+      </div>
   );
 }
 
