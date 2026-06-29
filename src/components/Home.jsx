@@ -4,7 +4,6 @@ import Banner from './Banner';
 import Carousel from './Carousel';
 import Catalog from './Catalog';
 import ProductCard from './ProductCard';
-import DiscountsSection from './DiscountsSection';
 import { useLanguage } from '../i18n/LanguageContext';
 
 const Home = ({
@@ -24,7 +23,7 @@ const Home = ({
         <div>
             <SEO
                 title={t.home.title}
-                description="999 Premium Tools - Zargarlik uskunalari va asboblari do'koni. Eng sifatli mahsulotlar va hamyonbop narxlar."
+                description="999 Premium Tools - Zargarlik uskunalari va asboblari do'koni. Eng sifatli mahsulotlar va ishonchli servis."
             />
             <Banner onNavigate={onNavigate} />
             <Carousel items={carouselItems} />
@@ -54,13 +53,6 @@ const Home = ({
                     </div>
                 </section>
             )}
-
-            {/* Chegirmalar Bo'limi */}
-            <DiscountsSection
-                products={products}
-                onToggleFavourite={onToggleFavourite}
-                favourites={favourites}
-            />
 
             {/* Asosiy Katalog */}
             <Catalog

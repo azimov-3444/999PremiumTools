@@ -2,10 +2,30 @@ import axios from 'axios';
 import { supabase } from '../supabase';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+const FALLBACK_API_URL = import.meta.env.VITE_FALLBACK_API_URL || 'https://nine99-premiumtools.onrender.com/api';
+const ORDER_API_URL = import.meta.env.VITE_ORDER_API_URL || API_URL;
 
 const api = axios.create({
     baseURL: API_URL,
 });
+
+const fallbackApi = axios.create({
+    baseURL: FALLBACK_API_URL,
+});
+
+const orderApi = axios.create({
+    baseURL: ORDER_API_URL,
+});
+
+const getPublic = async (endpoint) => {
+    try {
+        return await api.get(endpoint);
+    } catch (error) {
+        if (API_URL === FALLBACK_API_URL) throw error;
+        console.warn(`Primary API failed for ${endpoint}, using fallback API:`, error.message);
+        return fallbackApi.get(endpoint);
+    }
+};
 
 // Helper: Upload image to Supabase Storage (Keeping this as is because MongoDB is not for file storage)
 export const uploadImage = async (file, bucket = 'products') => {
@@ -13,7 +33,7 @@ export const uploadImage = async (file, bucket = 'products') => {
     const fileName = `${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
     const filePath = `${fileName}`;
 
-    const { data, error } = await supabase.storage
+    const { error } = await supabase.storage
         .from(bucket)
         .upload(filePath, file);
 
@@ -95,7 +115,7 @@ export const loginUser = async (email, password) => {
     try {
         const res = await api.post('/users/login', { email, password });
         return convertUserToCamelCase(res.data);
-    } catch (error) {
+    } catch {
         throw new Error('Invalid credentials');
     }
 };
@@ -118,7 +138,7 @@ export const updateUserPassword = async (email, newPassword) => {
 // ==================== CATEGORY API ====================
 
 export const getAllCategories = async () => {
-    const res = await api.get('/categories');
+    const res = await getPublic('/categories');
     return res.data;
 };
 
@@ -160,7 +180,7 @@ export const deleteCategory = async (categoryId) => {
 // ==================== PRODUCT API ====================
 
 export const getAllProducts = async () => {
-    const res = await api.get('/products');
+    const res = await getPublic('/products');
     return res.data.map(convertProductToCamelCase);
 };
 
@@ -224,7 +244,7 @@ export const updateProduct = async (productId, productData) => {
 // ==================== CAROUSEL API ====================
 
 export const getAllCarouselItems = async () => {
-    const res = await api.get('/carousel');
+    const res = await getPublic('/carousel');
     return res.data.map(convertCarouselItemToCamelCase);
 };
 
@@ -314,22 +334,30 @@ export const getVisitStats = async () => {
 // ==================== REVIEWS API ====================
 
 export const getProductReviews = async (productId) => {
-    const res = await api.get(`/reviews/product/${productId}`);
+    const res = await getPublic(`/reviews/product/${productId}`);
     return res.data;
 };
 
 export const getAllReviews = async () => {
-    const res = await api.get('/reviews');
+    const res = await getPublic('/reviews');
     return res.data;
 };
 
 export const getReviewSummaries = async () => {
     try {
-        const res = await api.get('/reviews/summary');
+        const res = await getPublic('/reviews/summary');
         return res.data;
     } catch (error) {
-        console.warn('Falling back to full reviews for summaries:', error);
-        const reviews = await getAllReviews();
+        console.info('Review summaries are unavailable, trying full reviews:', error.message);
+        let reviews = [];
+
+        try {
+            reviews = await getAllReviews();
+        } catch (reviewsError) {
+            console.info('Reviews are unavailable, continuing without review summaries:', reviewsError.message);
+            return [];
+        }
+
         const summaryMap = new Map();
 
         reviews.forEach((review) => {
@@ -361,6 +389,20 @@ export const addReview = async (reviewData) => {
 
 export const deleteReview = async (reviewId) => {
     await api.delete(`/reviews/${reviewId}`);
+};
+
+// ==================== ORDER API ====================
+
+export const createOrder = async (orderData) => {
+    try {
+        const res = await orderApi.post('/orders', orderData);
+        return res.data;
+    } catch (error) {
+        if (error.code === 'ERR_NETWORK' || error.message === 'Network Error') {
+            throw new Error('Order API is not running. Start backend with: npm run server');
+        }
+        throw error;
+    }
 };
 
 export const getAverageRating = async (productId) => {

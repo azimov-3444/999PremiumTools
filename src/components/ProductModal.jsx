@@ -1,36 +1,37 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { toast } from 'react-toastify';
 import * as api from '../api/supabaseApi';
 import { useLanguage } from '../i18n/LanguageContext';
-import { toast } from 'react-toastify';
 import { getProductImages } from '../utils/productImages';
 
-const ProductModal = ({ product, onClose, onToggleFavourite, isFavourite }) => {
+const ProductModal = ({ product, onClose, onAddToCart, onToggleFavourite, isFavourite }) => {
     const { t, language } = useLanguage();
+    const [activeImage, setActiveImage] = useState(0);
+    const [activeTab, setActiveTab] = useState('details');
+    const [failedImageUrls, setFailedImageUrls] = useState([]);
     const [reviews, setReviews] = useState([]);
     const [averageRating, setAverageRating] = useState(0);
     const [loadingReviews, setLoadingReviews] = useState(true);
     const [showReviewForm, setShowReviewForm] = useState(false);
-    const [currentImageIndex, setCurrentImageIndex] = useState(0);
+    const [submitting, setSubmitting] = useState(false);
     const [reviewForm, setReviewForm] = useState({
         userName: '',
         userEmail: '',
         rating: 5,
         comment: ''
     });
-    const [submitting, setSubmitting] = useState(false);
-    const [failedImageUrls, setFailedImageUrls] = useState([]);
 
     const loadReviews = useCallback(async () => {
         if (!product) return;
+
         try {
             setLoadingReviews(true);
             const reviewsData = await api.getProductReviews(product.id);
             setReviews(reviewsData);
 
-            // Calculate average rating
             if (reviewsData.length > 0) {
-                const sum = reviewsData.reduce((acc, review) => acc + review.rating, 0);
-                setAverageRating(sum / reviewsData.length);
+                const total = reviewsData.reduce((sum, review) => sum + review.rating, 0);
+                setAverageRating(total / reviewsData.length);
             } else {
                 setAverageRating(0);
             }
@@ -41,17 +42,27 @@ const ProductModal = ({ product, onClose, onToggleFavourite, isFavourite }) => {
         }
     }, [product]);
 
-    // Load reviews on mount
     useEffect(() => {
         loadReviews();
     }, [loadReviews]);
 
     if (!product) return null;
 
-    const handleSubmitReview = async (e) => {
-        e.preventDefault();
+    const productName = product[`name${language === 'uz' ? 'Uz' : language === 'ru' ? 'Ru' : 'En'}`] || product.name;
+    const productDescription = product[`description${language === 'uz' ? 'Uz' : language === 'ru' ? 'Ru' : 'En'}`] || product.description;
+    const images = getProductImages(product).filter((image) => !failedImageUrls.includes(image.url));
+    const safeImageIndex = images.length > 0 ? activeImage % images.length : 0;
+    const currentImage = images[safeImageIndex];
+
+    const handleImageError = (url) => {
+        setFailedImageUrls((prev) => prev.includes(url) ? prev : [...prev, url]);
+    };
+
+    const handleSubmitReview = async (event) => {
+        event.preventDefault();
+
         if (!reviewForm.userName.trim() || !reviewForm.comment.trim()) {
-            toast.error(t.common.error); // Simplified validation message
+            toast.error(t.common.error);
             return;
         }
 
@@ -65,7 +76,6 @@ const ProductModal = ({ product, onClose, onToggleFavourite, isFavourite }) => {
                 comment: reviewForm.comment
             });
 
-            // Reset form and reload reviews
             setReviewForm({
                 userName: '',
                 userEmail: '',
@@ -74,7 +84,7 @@ const ProductModal = ({ product, onClose, onToggleFavourite, isFavourite }) => {
             });
             setShowReviewForm(false);
             await loadReviews();
-            toast.success(t.contact.messageSent); // Reusing message sent success
+            toast.success(t.contact.messageSent);
         } catch (error) {
             console.error('Error adding review:', error);
             toast.error(`${t.common.error}: ${error.message || 'Tizim xatosi'}`);
@@ -83,324 +93,323 @@ const ProductModal = ({ product, onClose, onToggleFavourite, isFavourite }) => {
         }
     };
 
-    // Rating yulduzchalarini ko'rsatish
-    const renderStars = (rating, interactive = false, onRatingChange = null) => {
-        const stars = [];
-        for (let i = 1; i <= 5; i++) {
-            stars.push(
-                <button
-                    key={i}
-                    type="button"
-                    onClick={() => interactive && onRatingChange && onRatingChange(i)}
-                    disabled={!interactive}
-                    className={`${interactive ? 'cursor-pointer hover:scale-110' : 'cursor-default'} transition`}
-                >
-                    <svg
-                        className={`w-5 h-5 ${i <= rating ? 'text-yellow-400' : 'text-gray-300'} fill-current`}
-                        viewBox="0 0 20 20"
+    const renderStars = (rating, interactive = false, onRatingChange = null) => (
+        <div className="flex gap-0.5">
+            {Array.from({ length: 5 }, (_, index) => {
+                const value = index + 1;
+                return (
+                    <button
+                        key={value}
+                        type="button"
+                        disabled={!interactive}
+                        onClick={() => interactive && onRatingChange?.(value)}
+                        className={`${interactive ? 'cursor-pointer hover:scale-110' : 'cursor-default'} rounded transition`}
+                        aria-label={`${value} ${t.productModal.rating}`}
                     >
-                        <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
-                    </svg>
-                </button>
-            );
-        }
-        return stars;
-    };
+                        <svg
+                            className={`h-4 w-4 ${value <= rating ? 'fill-current text-amber-400' : 'fill-current text-gray-300'}`}
+                            viewBox="0 0 20 20"
+                        >
+                            <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+                        </svg>
+                    </button>
+                );
+            })}
+        </div>
+    );
 
     const formatDate = (dateString) => {
         const date = new Date(dateString);
         return date.toLocaleDateString(language === 'uz' ? 'uz-UZ' : language === 'ru' ? 'ru-RU' : 'en-US', {
             year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
+            month: 'short',
+            day: 'numeric'
         });
     };
 
-    const handleImageError = (url) => {
-        setFailedImageUrls((prev) => prev.includes(url) ? prev : [...prev, url]);
-    };
-
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onClick={onClose}>
-            <div
-                className="bg-white rounded-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto"
-                onClick={(e) => e.stopPropagation()}
+        <div
+            className="fixed inset-0 z-[80] flex items-center justify-center bg-gray-950/60 p-0 backdrop-blur-sm sm:p-4"
+            onClick={onClose}
+        >
+            <article
+                className="relative h-[100dvh] w-full overflow-hidden bg-white shadow-[0_30px_90px_rgba(15,23,42,0.34)] sm:h-[94dvh] sm:max-w-5xl sm:rounded-lg"
+                onClick={(event) => event.stopPropagation()}
             >
-                {/* Close Button */}
-                <button
-                    onClick={onClose}
-                    className="sticky top-4 float-right mr-4 bg-white rounded-full p-2 shadow-lg hover:bg-gray-100 transition z-10"
-                >
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
-
-                <div className="p-6 md:p-8">
-                    <div className="grid md:grid-cols-2 gap-8 mb-8">
-                        {/* Product Image Gallery */}
-                        <div className="relative">
-                            {product.featured && (
-                                <div className="absolute top-4 left-4 bg-yellow-400 text-gray-800 px-3 py-1 rounded-full text-sm font-bold z-10">
-                                    {t.catalog.recommended}
-                                </div>
-                            )}
-                            {product.bestSeller && (
-                                <div className="absolute top-4 right-4 bg-red-600 text-white px-3 py-1 rounded-full text-sm font-bold z-10">
-                                    {t.home.bestSellers.replace('🔥 ', '')}
-                                </div>
-                            )}
-
-                            {(() => {
-                                const images = getProductImages(product).filter((image) => !failedImageUrls.includes(image.url));
-                                const safeImageIndex = images.length > 0 ? currentImageIndex % images.length : 0;
-                                const currentImage = images[safeImageIndex];
-
-                                return (
-                                    <div className="bg-gray-100 rounded-xl h-96 flex items-center justify-center relative group">
-                                        {images.length > 0 ? (
-                                            <>
-                                                <img
-                                                    src={currentImage?.url}
-                                                    alt={product.name}
-                                                    className="w-full h-full object-cover rounded-xl"
-                                                    onError={() => handleImageError(currentImage?.url)}
-                                                />
-
-                                                {/* Navigation if multiple images */}
-                                                {images.length > 1 && (
-                                                    <>
-                                                        <button
-                                                            onClick={() => setCurrentImageIndex((prev) =>
-                                                                prev === 0 ? images.length - 1 : prev - 1
-                                                            )}
-                                                            className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-3 rounded-full transition"
-                                                        >
-                                                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                                                            </svg>
-                                                        </button>
-
-                                                        <button
-                                                            onClick={() => setCurrentImageIndex((prev) =>
-                                                                prev === images.length - 1 ? 0 : prev + 1
-                                                            )}
-                                                            className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-3 rounded-full transition"
-                                                        >
-                                                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                                            </svg>
-                                                        </button>
-
-                                                        {/* Thumbnails */}
-                                                        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
-                                                            {images.map((img, index) => (
-                                                                <button
-                                                                    key={index}
-                                                                    onClick={() => setCurrentImageIndex(index)}
-                                                                    className={`w-16 h-16 rounded-lg overflow-hidden border-2 transition ${index === safeImageIndex
-                                                                        ? 'border-white scale-110'
-                                                                        : 'border-white/50 opacity-70 hover:opacity-100'
-                                                                        }`}
-                                                                >
-                                                                    <img
-                                                                        src={img.url}
-                                                                        alt={`Thumbnail ${index + 1}`}
-                                                                        className="w-full h-full object-cover"
-                                                                        onError={() => handleImageError(img.url)}
-                                                                    />
-                                                                </button>
-                                                            ))}
-                                                        </div>
-                                                    </>
-                                                )}
-                                            </>
-                                        ) : (
-                                            <div className="text-gray-400 text-center">
-                                                <svg className="w-32 h-32 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                                </svg>
-                                                <p>{t.admin.image} {t.common.no}</p>
-                                            </div>
-                                        )}
-                                    </div>
-                                );
-                            })()}
+                <header className="absolute left-0 right-0 top-0 z-30 border-b border-gray-100 bg-white/96 px-4 py-3 backdrop-blur-xl">
+                    <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-primary text-xs font-black text-white shadow-lg shadow-red-900/20">
+                            999
                         </div>
-
-                        {/* Product Details */}
-                        <div className="flex flex-col">
-                            <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-3">
-                                {product[`name${language === 'uz' ? 'Uz' : language === 'ru' ? 'Ru' : 'En'}`] || product.name}
-                            </h2>
-
-                            {/* Rating */}
-                            <div className="flex items-center gap-2 mb-4">
-                                <div className="flex gap-1">
-                                    {renderStars(Math.round(averageRating))}
-                                </div>
-                                <span className="text-gray-600 font-semibold">
-                                    {averageRating > 0 ? averageRating.toFixed(1) : t.common.noResults}
-                                </span>
-                                <span className="text-gray-400">({reviews.length} {t.productModal.reviews.toLowerCase()})</span>
-                            </div>
-
-                            {/* Price */}
-                            <p className="text-3xl font-bold text-primary mb-6">
-                                {product.price.toLocaleString()} {t.product.som}
-                            </p>
-
-                            {/* Description */}
-                            {product.description && (
-                                <div className="mb-6">
-                                    <h3 className="font-semibold text-lg text-gray-800 mb-2">{t.productModal.description}</h3>
-                                    <p className="text-gray-600 leading-relaxed">
-                                        {product[`description${language === 'uz' ? 'Uz' : language === 'ru' ? 'Ru' : 'En'}`] || product.description}
-                                    </p>
-                                </div>
-                            )}
-
-                            {/* Specifications */}
-                            <div className="mb-6 bg-gray-50 rounded-lg p-4">
-                                <h3 className="font-semibold text-lg text-gray-800 mb-3">{t.admin.stock}</h3>
-                                <div className="space-y-2 text-sm">
-                                    <div className="flex justify-between">
-                                        <span className="text-gray-600">{t.admin.stock}:</span>
-                                        <span className={`font-semibold ${product.inStock ? 'text-green-600' : 'text-red-600'}`}>
-                                            {product.inStock
-                                                ? `${product.stock} ${t.admin.units[product.unit || 'piece']}`
-                                                : t.product.outOfStock}
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Action Buttons */}
-                            <div className="flex gap-3 mt-auto">
-                                <button
-                                    onClick={() => onToggleFavourite(product.id)}
-                                    className={`p-4 rounded-lg border-2 transition ${isFavourite
-                                        ? 'border-primary bg-primary text-white'
-                                        : 'border-gray-300 text-gray-400 hover:border-primary hover:text-primary'
-                                        }`}
-                                >
-                                    <svg className="w-7 h-7" fill={isFavourite ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                                    </svg>
-                                </button>
-                            </div>
+                        <div className="min-w-0 flex-1">
+                            <p className="text-[11px] font-black uppercase tracking-wide text-primary">999 Premium Tools</p>
+                            <p className="truncate text-sm font-black text-gray-950 sm:text-base">{productName}</p>
                         </div>
+                        <button
+                            onClick={onClose}
+                            className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-gray-100 text-gray-900 transition hover:bg-primary hover:text-white"
+                            aria-label={t.productModal.close}
+                        >
+                            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
                     </div>
+                </header>
 
-                    {/* Reviews Section */}
-                    <div className="border-t pt-8">
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-2xl font-bold text-gray-800">
-                                {t.productModal.reviews} ({reviews.length})
-                            </h3>
-                            <button
-                                onClick={() => setShowReviewForm(!showReviewForm)}
-                                className="bg-primary text-white px-6 py-2 rounded-lg hover:bg-red-700 transition font-medium"
-                            >
-                                {showReviewForm ? t.productModal.cancel : t.productModal.writeReview}
-                            </button>
+                <div className="h-full overflow-y-auto bg-[linear-gradient(180deg,#f8fafc_0%,#ffffff_46%,#f8fafc_100%)] px-3 pb-6 pt-20 sm:px-5">
+                    <section className="mx-auto max-w-4xl">
+                        <div className="relative overflow-hidden rounded-lg border border-gray-100 bg-[radial-gradient(circle_at_25%_0%,rgba(220,38,38,0.12),transparent_34%),linear-gradient(135deg,#ffffff,#eef2f7)] shadow-[0_20px_55px_rgba(15,23,42,0.10)]">
+                            <div className="absolute inset-0 opacity-60 [background-image:linear-gradient(rgba(15,23,42,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(15,23,42,0.04)_1px,transparent_1px)] [background-size:34px_34px]" />
+
+                            <div className="absolute left-3 top-3 z-10 flex flex-wrap gap-2">
+                                {product.featured && (
+                                    <span className="rounded-md bg-amber-400 px-2.5 py-1 text-xs font-black text-gray-950 shadow-sm">
+                                        {t.catalog.recommended}
+                                    </span>
+                                )}
+                                {product.bestSeller && (
+                                    <span className="rounded-md bg-primary px-2.5 py-1 text-xs font-black text-white shadow-sm">
+                                        {t.home.bestSellers}
+                                    </span>
+                                )}
+                            </div>
+
+                            <div className="relative flex h-[52dvh] min-h-[360px] items-center justify-center sm:h-[62dvh] sm:min-h-[520px]">
+                                {currentImage ? (
+                                    <img
+                                        src={currentImage.url}
+                                        alt={productName}
+                                        className="h-full w-full object-contain p-5 drop-shadow-[0_18px_28px_rgba(15,23,42,0.18)] sm:p-9"
+                                        onError={() => handleImageError(currentImage.url)}
+                                    />
+                                ) : (
+                                    <div className="px-8 text-center text-gray-400">
+                                        <svg className="mx-auto mb-3 h-20 w-20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                        </svg>
+                                        <p className="text-sm font-black">{t.admin.image} {t.common.no}</p>
+                                    </div>
+                                )}
+
+                                {images.length > 1 && (
+                                    <>
+                                        <button
+                                            onClick={() => setActiveImage((current) => current === 0 ? images.length - 1 : current - 1)}
+                                            className="absolute left-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-gray-950 shadow-xl ring-1 ring-gray-200 transition hover:bg-primary hover:text-white"
+                                            aria-label="Previous image"
+                                        >
+                                            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                            </svg>
+                                        </button>
+                                        <button
+                                            onClick={() => setActiveImage((current) => current === images.length - 1 ? 0 : current + 1)}
+                                            className="absolute right-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-gray-950 shadow-xl ring-1 ring-gray-200 transition hover:bg-primary hover:text-white"
+                                            aria-label="Next image"
+                                        >
+                                            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                            </svg>
+                                        </button>
+                                    </>
+                                )}
+                            </div>
                         </div>
 
-                        {/* Review Form */}
-                        {showReviewForm && (
-                            <form onSubmit={handleSubmitReview} className="bg-gray-50 rounded-lg p-6 mb-6">
-                                <div className="grid md:grid-cols-2 gap-4 mb-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            {t.productModal.yourName} *
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={reviewForm.userName}
-                                            onChange={(e) => setReviewForm({ ...reviewForm, userName: e.target.value })}
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                                            required
+                        {images.length > 1 && (
+                            <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+                                {images.map((image, index) => (
+                                    <button
+                                        key={image.url}
+                                        onClick={() => setActiveImage(index)}
+                                        className={`h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg border bg-white shadow-sm transition sm:h-20 sm:w-20 ${index === safeImageIndex
+                                            ? 'border-primary ring-4 ring-red-100'
+                                            : 'border-gray-200 opacity-80 hover:opacity-100'
+                                            }`}
+                                        aria-label={`Image ${index + 1}`}
+                                    >
+                                        <img
+                                            src={image.url}
+                                            alt=""
+                                            className="h-full w-full object-cover"
+                                            onError={() => handleImageError(image.url)}
                                         />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            {t.productModal.yourEmail}
-                                        </label>
-                                        <input
-                                            type="email"
-                                            value={reviewForm.userEmail}
-                                            onChange={(e) => setReviewForm({ ...reviewForm, userEmail: e.target.value })}
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="mb-4">
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        {t.productModal.rating} *
-                                    </label>
-                                    <div className="flex gap-1">
-                                        {renderStars(reviewForm.rating, true, (rating) => setReviewForm({ ...reviewForm, rating }))}
-                                    </div>
-                                </div>
-
-                                <div className="mb-4">
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        {t.productModal.yourReview} *
-                                    </label>
-                                    <textarea
-                                        value={reviewForm.comment}
-                                        onChange={(e) => setReviewForm({ ...reviewForm, comment: e.target.value })}
-                                        rows="4"
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                                        placeholder={t.productModal.yourReview + "..."}
-                                        required
-                                    />
-                                </div>
-
-                                <button
-                                    type="submit"
-                                    disabled={submitting}
-                                    className="bg-primary text-white px-8 py-3 rounded-lg hover:bg-red-700 transition font-medium disabled:opacity-50"
-                                >
-                                    {submitting ? t.common.loading : t.productModal.submit}
-                                </button>
-                            </form>
-                        )}
-
-                        {/* Reviews List */}
-                        {loadingReviews ? (
-                            <div className="text-center py-8">
-                                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-                            </div>
-                        ) : reviews.length === 0 ? (
-                            <div className="text-center py-8 text-gray-500">
-                                <p className="text-lg">{t.productModal.noReviews}</p>
-                                <p className="text-sm">{t.productModal.beFirst}</p>
-                            </div>
-                        ) : (
-                            <div className="space-y-4">
-                                {reviews.map((review) => (
-                                    <div key={review.id} className="bg-gray-50 rounded-lg p-6">
-                                        <div className="flex items-start justify-between mb-3">
-                                            <div>
-                                                <h4 className="font-semibold text-gray-800">{review.user_name}</h4>
-                                                <p className="text-sm text-gray-500">{formatDate(review.created_at)}</p>
-                                            </div>
-                                            <div className="flex gap-1">
-                                                {renderStars(review.rating)}
-                                            </div>
-                                        </div>
-                                        <p className="text-gray-700 leading-relaxed">{review.comment}</p>
-                                    </div>
+                                    </button>
                                 ))}
                             </div>
                         )}
-                    </div>
+
+                        <div className="mt-4 space-y-3">
+                            <div className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-gray-100">
+                                <h1 className="text-2xl font-black leading-tight text-gray-950 sm:text-3xl">
+                                    {productName}
+                                </h1>
+                                <div className="mt-3 flex flex-wrap items-center gap-2">
+                                    {renderStars(Math.round(averageRating))}
+                                    <span className="text-sm font-black text-gray-800">
+                                        {averageRating > 0 ? averageRating.toFixed(1) : t.common.noResults}
+                                    </span>
+                                    <span className="text-sm font-semibold text-gray-500">
+                                        ({reviews.length} {t.productModal.reviews.toLowerCase()})
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-gray-100">
+                                    <p className="text-xs font-black uppercase tracking-wide text-gray-500">{t.admin.stock}</p>
+                                    <p className={`mt-1 text-sm font-black ${product.inStock ? 'text-emerald-600' : 'text-primary'}`}>
+                                        {product.inStock ? t.product.inStock : t.product.outOfStock}
+                                    </p>
+                                </div>
+                                <div className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-gray-100">
+                                    <p className="text-xs font-black uppercase tracking-wide text-gray-500">Brend</p>
+                                    <p className="mt-1 text-sm font-black text-gray-950">{product.brand || '999 Premium Tools'}</p>
+                                </div>
+                            </div>
+
+                            <div className="rounded-lg bg-white p-1 shadow-sm ring-1 ring-gray-100">
+                                <div className="grid grid-cols-2 gap-1">
+                                    <button
+                                        type="button"
+                                        onClick={() => setActiveTab('details')}
+                                        className={`rounded-lg px-3 py-2 text-sm font-black transition ${activeTab === 'details' ? 'bg-primary text-white shadow-md shadow-red-900/20' : 'text-gray-600 hover:bg-red-50 hover:text-primary'}`}
+                                    >
+                                        {t.productModal.description}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setActiveTab('reviews')}
+                                        className={`rounded-lg px-3 py-2 text-sm font-black transition ${activeTab === 'reviews' ? 'bg-primary text-white shadow-md shadow-red-900/20' : 'text-gray-600 hover:bg-red-50 hover:text-primary'}`}
+                                    >
+                                        {t.productModal.reviews}
+                                    </button>
+                                </div>
+                            </div>
+
+                            {activeTab === 'details' ? (
+                                <div className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-gray-100">
+                                    <h3 className="mb-2 text-base font-black text-gray-950">{t.productModal.description}</h3>
+                                    {productDescription ? (
+                                        <p className="text-sm leading-6 text-gray-600 sm:text-base sm:leading-7">
+                                            {productDescription}
+                                        </p>
+                                    ) : (
+                                        <p className="text-sm font-semibold text-gray-500">{t.common.noResults}</p>
+                                    )}
+                                </div>
+                            ) : (
+                                <div className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-gray-100">
+                                    <div className="mb-4 flex items-center justify-between gap-3">
+                                        <h3 className="text-base font-black text-gray-950">
+                                            {t.productModal.reviews} ({reviews.length})
+                                        </h3>
+                                        <button
+                                            onClick={() => setShowReviewForm(!showReviewForm)}
+                                            className="rounded-lg bg-primary px-4 py-2 text-xs font-black text-white shadow-lg shadow-red-900/20 transition hover:bg-red-700"
+                                        >
+                                            {showReviewForm ? t.productModal.cancel : t.productModal.writeReview}
+                                        </button>
+                                    </div>
+
+                                    {showReviewForm && (
+                                        <form onSubmit={handleSubmitReview} className="mb-4 rounded-lg bg-gray-50 p-3 ring-1 ring-gray-100">
+                                            <div className="grid gap-3 sm:grid-cols-2">
+                                                <input
+                                                    type="text"
+                                                    value={reviewForm.userName}
+                                                    onChange={(event) => setReviewForm({ ...reviewForm, userName: event.target.value })}
+                                                    className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none transition focus:border-primary/40 focus:ring-4 focus:ring-red-100"
+                                                    placeholder={t.productModal.yourName}
+                                                    required
+                                                />
+                                                <input
+                                                    type="email"
+                                                    value={reviewForm.userEmail}
+                                                    onChange={(event) => setReviewForm({ ...reviewForm, userEmail: event.target.value })}
+                                                    className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none transition focus:border-primary/40 focus:ring-4 focus:ring-red-100"
+                                                    placeholder={t.productModal.yourEmail}
+                                                />
+                                            </div>
+                                            <div className="mt-3">
+                                                {renderStars(reviewForm.rating, true, (rating) => setReviewForm({ ...reviewForm, rating }))}
+                                            </div>
+                                            <textarea
+                                                value={reviewForm.comment}
+                                                onChange={(event) => setReviewForm({ ...reviewForm, comment: event.target.value })}
+                                                rows="3"
+                                                className="mt-3 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none transition focus:border-primary/40 focus:ring-4 focus:ring-red-100"
+                                                placeholder={t.productModal.yourReview}
+                                                required
+                                            />
+                                            <button
+                                                type="submit"
+                                                disabled={submitting}
+                                                className="mt-3 rounded-lg bg-primary px-5 py-2 text-sm font-black text-white transition hover:bg-red-700 disabled:opacity-50"
+                                            >
+                                                {submitting ? t.common.loading : t.productModal.submit}
+                                            </button>
+                                        </form>
+                                    )}
+
+                                    {loadingReviews ? (
+                                        <div className="py-8 text-center">
+                                            <div className="mx-auto h-9 w-9 animate-spin rounded-full border-4 border-red-100 border-b-primary" />
+                                        </div>
+                                    ) : reviews.length === 0 ? (
+                                        <div className="rounded-lg bg-gray-50 p-5 text-center">
+                                            <p className="font-black text-gray-700">{t.productModal.noReviews}</p>
+                                            <p className="mt-1 text-sm text-gray-500">{t.productModal.beFirst}</p>
+                                        </div>
+                                    ) : (
+                                        <div className="max-h-64 space-y-3 overflow-y-auto pr-1">
+                                            {reviews.map((review) => (
+                                                <div key={review.id} className="rounded-lg bg-gray-50 p-3 ring-1 ring-gray-100">
+                                                    <div className="mb-2 flex items-start justify-between gap-3">
+                                                        <div>
+                                                            <p className="font-black text-gray-950">{review.user_name}</p>
+                                                            <p className="text-xs font-semibold text-gray-500">{formatDate(review.created_at)}</p>
+                                                        </div>
+                                                        {renderStars(review.rating)}
+                                                    </div>
+                                                    <p className="text-sm leading-6 text-gray-700">{review.comment}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
+                                <button
+                                    onClick={() => onAddToCart?.(product.id)}
+                                    disabled={product.inStock === false}
+                                    className="flex min-h-12 w-full items-center justify-center gap-2 rounded-lg bg-primary px-5 py-3 text-sm font-black text-white shadow-xl shadow-red-900/20 transition hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-600"
+                                >
+                                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h9.5l3-7H5.4M7 13L5.4 5M7 13l-1.2 1.2C5.2 14.8 5.6 16 6.5 16H17m-9 4a1 1 0 100-2 1 1 0 000 2zm8 0a1 1 0 100-2 1 1 0 000 2z" />
+                                    </svg>
+                                    Savatchaga qo'shish
+                                </button>
+
+                                <button
+                                    onClick={() => onToggleFavourite(product.id)}
+                                    className={`flex min-h-12 items-center justify-center gap-2 rounded-lg border px-5 py-3 text-sm font-black transition ${isFavourite
+                                        ? 'border-primary bg-primary text-white shadow-xl shadow-red-900/20'
+                                        : 'border-gray-200 bg-white text-gray-800 hover:border-primary hover:bg-red-50 hover:text-primary'
+                                        }`}
+                                >
+                                    <svg className="h-5 w-5" fill={isFavourite ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                    </svg>
+                                    {isFavourite ? t.product.inFavorites : t.product.addToFavorites}
+                                </button>
+                            </div>
+                        </div>
+                    </section>
                 </div>
-            </div>
+            </article>
         </div>
     );
 };

@@ -1,0 +1,8 @@
+{
+  "name": "premium-tools-telegram-bot",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node index.js"
+  }
+}

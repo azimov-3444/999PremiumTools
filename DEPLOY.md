@@ -58,6 +58,12 @@ git push -u origin main
 4. **Environment Variables** qo'shing:
    - **Key**: `DATABASE_URL`
    - **Value**: (3-qadamda ko'chirilgan Internal Database URL)
+   - **Key**: `TELEGRAM_BOT_TOKEN`
+   - **Value**: BotFather bergan bot token
+   - **Key**: `TELEGRAM_BOT_OWNER_IDS`
+   - **Value**: bot yaratuvchisining Telegram chat ID si, masalan `123456789`
+   - **Key**: `TELEGRAM_ADMIN_CHAT_IDS`
+   - **Value**: buyurtma xabari boradigan admin chat ID lar, vergul bilan: `123456789,987654321`
 
 5. **"Create Web Service"** tugmasini bosing
 
@@ -89,6 +95,33 @@ https://premium-tools-api.onrender.com/docs
 ```env
 VITE_API_URL=https://premium-tools-api.onrender.com/api
 ```
+
+## Telegram botni lokal ishga tushirish
+
+Sayt -> backend -> Telegram bot zanjiri lokal ishlashi uchun uchta terminal oching:
+
+1. Backend API:
+```bash
+npm run server
+```
+
+2. Telegram bot:
+```bash
+cd telegrambot
+npm run dev
+```
+
+Yoki project rootdan:
+```bash
+npm run bot
+```
+
+3. Frontend site:
+```bash
+npm run dev
+```
+
+`.env` ichida lokal test uchun `VITE_API_URL=http://localhost:8000/api` bo'lishi kerak. Terminalda `Telegram bot polling started` chiqsa, Telegramda botga `/start` yuboring.
 
 ## 8-qadam: Frontend ni qayta build qilish
 

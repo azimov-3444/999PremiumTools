@@ -15,7 +15,6 @@ const Catalog = ({
     const [searchParams] = useSearchParams();
     const [selectedCategory, setSelectedCategory] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
-    const [priceRange, setPriceRange] = useState({ min: '', max: '' });
     const [showFeatured, setShowFeatured] = useState(false);
     const [showFilters, setShowFilters] = useState(false);
     const [visibleCount, setVisibleCount] = useState(12);
@@ -24,7 +23,7 @@ const Catalog = ({
     // Reset visible count when category or search changes
     useEffect(() => {
         setVisibleCount(12);
-    }, [selectedCategory, searchQuery, priceRange]);
+    }, [selectedCategory, searchQuery]);
 
     // Initialize randomized products on mount or when products change
     useEffect(() => {
@@ -52,9 +51,6 @@ const Catalog = ({
             const matchMaterial = product.material?.toLowerCase().includes(query);
             if (!matchName && !matchDescription && !matchMaterial) return false;
         }
-        if (priceRange.min && product.price < parseInt(priceRange.min)) return false;
-        if (priceRange.max && product.price > parseInt(priceRange.max)) return false;
-
         // Filter by specific product ID if present in URL
         const productIdParam = searchParams.get('productId');
         if (productIdParam && product.id !== parseInt(productIdParam)) return false;
@@ -87,23 +83,31 @@ const Catalog = ({
         : null;
 
     return (
-        <div className="bg-gray-50 py-6 md:py-12 min-h-screen">
+        <div className="min-h-screen bg-[linear-gradient(180deg,#f8fafc_0%,#eef2f7_42%,#ffffff_100%)] py-4 md:py-10">
             <SEO
                 title={currentCategory ? `${currentCategory} - ${t.catalog.title}` : t.catalog.title}
                 description="999 Premium Tools mahsulotlar katalogi. Barcha turdagi zargarlik uskunalari va asboblari."
             />
-            <div className="container mx-auto px-4">
-                <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-6 md:mb-8">{t.catalog.title}</h2>
+            <div className="container mx-auto px-3 sm:px-4">
+                <div className="mb-4 flex flex-row items-end justify-between gap-3 md:mb-8">
+                    <div className="animate-fade-up">
+                        <p className="text-xs font-black uppercase tracking-wide text-primary">{currentCategory || t.catalog.allCategories}</p>
+                        <h2 className="mt-1 text-2xl font-black tracking-tight text-gray-950 md:mt-2 md:text-4xl">{t.catalog.title}</h2>
+                    </div>
+                    <div className="premium-surface animate-fade-up whitespace-nowrap rounded-lg px-3 py-2 text-xs font-black text-gray-700 md:px-4 md:py-3 md:text-base" style={{ animationDelay: '90ms' }}>
+                        {sortedProducts.length} / {products.length}
+                    </div>
+                </div>
 
                 {/* Search Bar */}
-                <div className="mb-4 md:mb-6">
+                <div className="animate-fade-up sticky top-16 z-30 -mx-3 mb-3 bg-white/82 px-3 py-2 backdrop-blur-xl md:static md:mx-0 md:mb-6 md:bg-transparent md:px-0 md:py-0 md:backdrop-blur-none" style={{ animationDelay: '120ms' }}>
                     <div className="relative">
                         <input
                             type="text"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             placeholder={t.common.search}
-                            className="w-full px-4 py-3 md:py-3 pl-12 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                            className="w-full rounded-lg border border-gray-200 bg-white/95 px-4 py-3 pl-12 text-base font-semibold text-gray-900 shadow-[0_18px_45px_rgba(15,23,42,0.08)] outline-none backdrop-blur transition placeholder:font-medium placeholder:text-gray-400 focus:border-primary/40 focus:ring-4 focus:ring-red-100 md:py-4"
                         />
                         <svg className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -114,7 +118,7 @@ const Catalog = ({
                 {/* Mobile Filter Button */}
                 <button
                     onClick={() => setShowFilters(!showFilters)}
-                    className="lg:hidden w-full mb-4 bg-white border-2 border-primary text-primary px-6 py-3 rounded-lg font-semibold flex items-center justify-center gap-2"
+                    className="mb-3 flex w-full items-center justify-center gap-2 rounded-lg border border-primary bg-white px-6 py-3 font-black text-primary shadow-lg shadow-red-900/10 transition hover:bg-primary hover:text-white lg:hidden"
                 >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
@@ -122,21 +126,21 @@ const Catalog = ({
                     {t.catalog.filters}
                 </button>
 
-                <div className="flex gap-6">
+                <div className="flex flex-col gap-6 lg:flex-row">
                     {/* Filters Sidebar - Desktop always visible, Mobile toggle */}
                     <div className={`${showFilters ? 'block' : 'hidden'} lg:block w-full lg:w-64 flex-shrink-0 mb-6 lg:mb-0`}>
-                        <div className="bg-white rounded-xl shadow-lg p-4 space-y-6">
+                        <div className="premium-surface scrollbar-soft sticky top-24 max-h-[calc(100vh-7rem)] space-y-6 overflow-auto rounded-lg p-4">
                             {/* Categories */}
                             <div>
-                                <h3 className="font-semibold text-lg text-gray-800 mb-4">
+                                <h3 className="mb-4 text-lg font-black text-gray-900">
                                     {t.catalog.categories}
                                 </h3>
                                 <div className="space-y-2">
                                     <button
                                         onClick={() => setSelectedCategory(null)}
-                                        className={`w-full text-left px-4 py-3 rounded-lg transition text-base ${selectedCategory === null
-                                            ? 'bg-primary text-white'
-                                            : 'hover:bg-gray-100 text-gray-700'
+                                        className={`w-full rounded-lg px-4 py-3 text-left text-base font-bold transition ${selectedCategory === null
+                                            ? 'bg-primary text-white shadow-lg shadow-red-900/20'
+                                            : 'bg-white/60 text-gray-700 hover:bg-red-50 hover:text-primary'
                                             }`}
                                     >
                                         {t.catalog.allCategories}
@@ -145,9 +149,9 @@ const Catalog = ({
                                         <button
                                             key={category.id}
                                             onClick={() => setSelectedCategory(category.id)}
-                                            className={`w-full text-left px-4 py-3 rounded-lg transition text-base ${selectedCategory === category.id
-                                                ? 'bg-primary text-white'
-                                                : 'hover:bg-gray-100 text-gray-700'
+                                            className={`w-full rounded-lg px-4 py-3 text-left text-base font-bold transition ${selectedCategory === category.id
+                                                ? 'bg-primary text-white shadow-lg shadow-red-900/20'
+                                                : 'bg-white/60 text-gray-700 hover:bg-red-50 hover:text-primary'
                                                 }`}
                                         >
                                             {category[`name${language === 'uz' ? 'Uz' : language === 'ru' ? 'Ru' : 'En'}`] || category.name}
@@ -156,45 +160,16 @@ const Catalog = ({
                                 </div>
                             </div>
 
-                            {/* Price Filter */}
-                            <div>
-                                <h3 className="font-semibold text-lg text-gray-800 mb-4">
-                                    {t.catalog.priceRange} ({t.product.som})
-                                </h3>
-                                <div className="space-y-2">
-                                    <input
-                                        type="number"
-                                        placeholder={t.catalog.minPrice}
-                                        value={priceRange.min}
-                                        onChange={(e) => setPriceRange({ ...priceRange, min: e.target.value })}
-                                        className="w-full px-3 py-3 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                                    />
-                                    <input
-                                        type="number"
-                                        placeholder={t.catalog.maxPrice}
-                                        value={priceRange.max}
-                                        onChange={(e) => setPriceRange({ ...priceRange, max: e.target.value })}
-                                        className="w-full px-3 py-3 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                                    />
-                                    <button
-                                        onClick={() => setPriceRange({ min: '', max: '' })}
-                                        className="text-primary text-base hover:underline"
-                                    >
-                                        {t.catalog.clearFilters}
-                                    </button>
-                                </div>
-                            </div>
-
                             {/* Featured Toggle */}
                             <div>
-                                <label className="flex items-center gap-3 cursor-pointer">
+                                <label className="flex cursor-pointer items-center gap-3 rounded-lg bg-white/65 p-3 transition hover:bg-red-50">
                                     <input
                                         type="checkbox"
                                         checked={showFeatured}
                                         onChange={(e) => setShowFeatured(e.target.checked)}
-                                        className="w-5 h-5 text-primary rounded focus:ring-primary"
+                                        className="h-5 w-5 rounded text-primary focus:ring-primary"
                                     />
-                                    <span className="text-gray-700 font-medium text-base">
+                                    <span className="text-base font-bold text-gray-700">
                                         {t.catalog.recommended}
                                     </span>
                                 </label>
@@ -203,7 +178,7 @@ const Catalog = ({
                             {/* Mobile: Close Filters Button */}
                             <button
                                 onClick={() => setShowFilters(false)}
-                                className="lg:hidden w-full bg-primary text-white py-3 rounded-lg font-semibold"
+                                className="w-full rounded-lg bg-primary py-3 font-black text-white transition hover:bg-red-700 lg:hidden"
                             >
                                 {t.catalog.saveFilters}
                             </button>
@@ -216,15 +191,16 @@ const Catalog = ({
 
                         {sortedProducts.length > 0 ? (
                             <>
-                                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-6">
-                                    {sortedProducts.slice(0, visibleCount).map(product => (
-                                        <ProductCard
-                                            key={product.id}
-                                            product={product}
-                                            onAddToCart={onAddToCart}
-                                            onToggleFavourite={onToggleFavourite}
-                                            isFavourite={favourites.includes(product.id)}
-                                        />
+                                <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 md:gap-5 lg:grid-cols-3 xl:grid-cols-4">
+                                    {sortedProducts.slice(0, visibleCount).map((product, index) => (
+                                        <div className="animate-fade-up" style={{ animationDelay: `${Math.min(index, 12) * 35}ms` }} key={product.id}>
+                                            <ProductCard
+                                                product={product}
+                                                onAddToCart={onAddToCart}
+                                                onToggleFavourite={onToggleFavourite}
+                                                isFavourite={favourites.includes(product.id)}
+                                            />
+                                        </div>
                                     ))}
                                 </div>
 
@@ -232,7 +208,7 @@ const Catalog = ({
                                     <div className="mt-12 text-center">
                                         <button
                                             onClick={() => setVisibleCount(prev => prev + 16)}
-                                            className="bg-white border-2 border-primary text-primary hover:bg-primary hover:text-white px-8 py-3 rounded-lg font-bold transition-all duration-300 shadow-md hover:shadow-lg inline-flex items-center gap-2 group"
+                                            className="inline-flex items-center gap-2 rounded-lg border border-primary bg-white px-8 py-3 font-black text-primary shadow-lg shadow-red-900/10 transition-all duration-300 hover:-translate-y-0.5 hover:bg-primary hover:text-white hover:shadow-xl group"
                                         >
                                             {t.catalog.showMore}
                                             <svg
@@ -248,7 +224,7 @@ const Catalog = ({
                                 )}
                             </>
                         ) : (
-                            <div className="text-center py-12">
+                            <div className="premium-surface rounded-lg py-12 text-center">
                                 <svg className="w-20 h-20 md:w-24 md:h-24 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
@@ -256,11 +232,10 @@ const Catalog = ({
                                 <button
                                     onClick={() => {
                                         setSearchQuery('');
-                                        setPriceRange({ min: '', max: '' });
                                         setSelectedCategory(null);
                                         setShowFeatured(false);
                                     }}
-                                    className="text-primary hover:underline text-base"
+                                    className="text-base font-bold text-primary hover:underline"
                                 >
                                     {t.catalog.tryAdjusting}
                                 </button>

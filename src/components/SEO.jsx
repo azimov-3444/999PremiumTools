@@ -4,7 +4,7 @@ import { Helmet } from 'react-helmet-async';
 const SEO = ({ title, description, keywords, image, url }) => {
     const siteTitle = '999 Premium Tools';
     const fullTitle = title ? `${title} | ${siteTitle}` : siteTitle;
-    const defaultDescription = "Toshkentda eng sifatli zargarlik uskunalari, polir mashinalar, tarozi va o'lchov asboblari. Arzon narxlar, kafolat va yetkazib berish xizmati.";
+    const defaultDescription = "Toshkentda eng sifatli zargarlik uskunalari, polir mashinalar, tarozi va o'lchov asboblari. Kafolat va yetkazib berish xizmati.";
     const defaultKeywords = "zargarlik uskunalari, zargar asboblari, polir mashina, tarozi, mikroskop, toshkent zargar, 999 premium tools";
     const defaultImage = 'https://999premiumtools.uz/og-image.jpg';
     const defaultUrl = 'https://999premiumtools.uz/';

@@ -56,37 +56,33 @@ const ProductCard = ({ product, onAddToCart, onToggleFavourite, isFavourite }) =
 
     return (
         <>
-            <div className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow overflow-hidden relative flex flex-col h-full">
+            <div className="premium-card group flex h-full flex-col overflow-hidden rounded-lg border border-gray-100 bg-white shadow-[0_16px_45px_rgba(15,23,42,0.08)]">
                 {/* Badges */}
-                <div className="absolute top-2 left-2 z-10 flex flex-col gap-1">
-                    {product.discount > 0 && (
-                        <div className="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-bold">
-                            -{product.discount}%
-                        </div>
-                    )}
+                <div className="absolute left-2 top-2 z-10 flex flex-col gap-1.5">
                     {product.featured && (
-                        <div className="bg-yellow-400 text-gray-800 px-3 py-1 rounded-full text-xs font-bold">
+                        <div className="rounded-md bg-amber-400 px-2.5 py-1 text-xs font-black text-gray-900 shadow-lg shadow-amber-900/15">
                             {t.catalog.recommended}
                         </div>
                     )}
                     {product.bestSeller && (
-                        <div className="bg-red-600 text-white px-3 py-1 rounded-full text-xs font-bold">
+                        <div className="rounded-md bg-primary px-2.5 py-1 text-xs font-black text-white shadow-lg shadow-red-900/20">
                             {t.home.bestSellers.replace('🔥 ', '')}
                         </div>
                     )}
                 </div>
 
                 {/* Product Image Slider */}
-                <div className="bg-gray-100 h-48 flex items-center justify-center relative overflow-hidden group">
+                <div className="relative flex h-36 items-center justify-center overflow-hidden bg-gradient-to-br from-gray-100 via-white to-gray-200 sm:h-52">
                     {visibleImages.length > 0 ? (
                         <>
                             <img
                                 src={currentImage?.url}
                                 alt={product.name}
-                                className="w-full h-full object-cover cursor-pointer"
+                                className="h-full w-full cursor-pointer object-cover transition duration-500 group-hover:scale-[1.08]"
                                 onClick={() => setShowModal(true)}
                                 onError={() => handleImageError(currentImage?.url)}
                             />
+                            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-gray-950/28 via-transparent to-white/10 opacity-70 transition group-hover:opacity-45" />
 
                             {/* Image Navigation */}
                             {visibleImages.length > 1 && (
@@ -99,7 +95,8 @@ const ProductCard = ({ product, onAddToCart, onToggleFavourite, isFavourite }) =
                                                 prev === 0 ? visibleImages.length - 1 : prev - 1
                                             );
                                         }}
-                                        className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                        className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-1.5 text-gray-900 opacity-0 shadow-lg backdrop-blur transition hover:bg-primary hover:text-white group-hover:opacity-100"
+                                        aria-label="Previous image"
                                     >
                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -114,7 +111,8 @@ const ProductCard = ({ product, onAddToCart, onToggleFavourite, isFavourite }) =
                                                 prev === visibleImages.length - 1 ? 0 : prev + 1
                                             );
                                         }}
-                                        className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                        className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-1.5 text-gray-900 opacity-0 shadow-lg backdrop-blur transition hover:bg-primary hover:text-white group-hover:opacity-100"
+                                        aria-label="Next image"
                                     >
                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -122,7 +120,7 @@ const ProductCard = ({ product, onAddToCart, onToggleFavourite, isFavourite }) =
                                     </button>
 
                                     {/* Dots Indicator */}
-                                    <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
+                                    <div className="absolute bottom-2 left-1/2 flex -translate-x-1/2 gap-1">
                                         {visibleImages.map((_, index) => (
                                             <button
                                                 key={index}
@@ -130,10 +128,11 @@ const ProductCard = ({ product, onAddToCart, onToggleFavourite, isFavourite }) =
                                                     e.stopPropagation();
                                                     setCurrentImageIndex(index);
                                                 }}
-                                                className={`w-1.5 h-1.5 rounded-full transition-all ${index === safeImageIndex
-                                                    ? 'bg-white w-3'
-                                                    : 'bg-white/50'
+                                                className={`h-1.5 rounded-full transition-all ${index === safeImageIndex
+                                                    ? 'w-4 bg-white'
+                                                    : 'w-1.5 bg-white/60'
                                                     }`}
+                                                aria-label={`Image ${index + 1}`}
                                             />
                                         ))}
                                     </div>
@@ -141,7 +140,7 @@ const ProductCard = ({ product, onAddToCart, onToggleFavourite, isFavourite }) =
                             )}
                         </>
                     ) : (
-                        <div className="text-gray-400 text-center cursor-pointer" onClick={() => setShowModal(true)}>
+                        <div className="cursor-pointer text-center text-gray-400 transition hover:text-primary" onClick={() => setShowModal(true)}>
                             <svg className="w-20 h-20 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                             </svg>
@@ -151,10 +150,10 @@ const ProductCard = ({ product, onAddToCart, onToggleFavourite, isFavourite }) =
                 </div>
 
                 {/* Product Info */}
-                <div className="p-4 flex flex-col flex-1">
+                <div className="relative z-10 flex flex-1 flex-col p-2.5 sm:p-4">
                     {/* Title - Clickable */}
                     <h3
-                        className="font-semibold text-lg text-gray-800 mb-2 line-clamp-2 min-h-[56px] cursor-pointer hover:text-primary transition"
+                        className="mb-2 line-clamp-2 min-h-[40px] cursor-pointer text-[13px] font-black leading-snug text-gray-900 transition hover:text-primary sm:min-h-[56px] sm:text-lg"
                         onClick={() => setShowModal(true)}
                     >
                         {product[`name${language === 'uz' ? 'Uz' : language === 'ru' ? 'Ru' : 'En'}`] || product.name}
@@ -162,7 +161,7 @@ const ProductCard = ({ product, onAddToCart, onToggleFavourite, isFavourite }) =
 
                     {/* Rating - Only show if has reviews */}
                     {product.reviewCount > 0 && (
-                        <div className="flex items-center gap-2 mb-2">
+                        <div className="mb-2 flex items-center gap-1.5">
                             <div className="flex gap-0.5">
                                 {renderStars(product.rating)}
                             </div>
@@ -174,56 +173,50 @@ const ProductCard = ({ product, onAddToCart, onToggleFavourite, isFavourite }) =
 
                     {/* Brand */}
                     {product.brand && (
-                        <p className="text-sm text-gray-500 mb-2">
+                        <p className="mb-2 text-xs text-gray-500 sm:text-sm">
                             <span className="font-medium">Brend:</span> {product.brand}
                         </p>
                     )}
 
                     {/* Stock Status */}
                     {!product.inStock && (
-                        <p className="text-sm text-red-500 font-semibold mb-2">
+                        <p className="mb-2 text-xs font-semibold text-red-500 sm:text-sm">
                             ❌ {t.product.outOfStock}
                         </p>
                     )}
 
-                    {/* Price */}
-                    <div className="mb-3">
-                        {product.discount > 0 ? (
-                            <div>
-                                <p className="text-2xl font-bold text-green-600 mb-0.5">
-                                    {Math.round(product.price * (1 - product.discount / 100)).toLocaleString()} {t.product.som}
-                                </p>
-                                <p className="text-sm text-gray-500 line-through">
-                                    {product.price.toLocaleString()} {t.product.som}
-                                </p>
-                            </div>
-                        ) : (
-                            <p className="text-2xl font-bold text-primary">
-                                {product.price.toLocaleString()} {t.product.som}
-                            </p>
-                        )}
-                    </div>
-
                     {/* Description - if available */}
                     {product.description && (
-                        <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+                        <p className="mb-3 line-clamp-2 text-xs leading-5 text-gray-600 sm:text-sm sm:leading-6">
                             {product[`description${language === 'uz' ? 'Uz' : language === 'ru' ? 'Ru' : 'En'}`] || product.description}
                         </p>
                     )}
 
-                    {/* Favorite Button - Always at bottom */}
-                    <button
-                        onClick={() => onToggleFavourite(product.id)}
-                        className={`w-full py-2 px-4 rounded-lg border-2 transition flex items-center justify-center gap-2 font-medium whitespace-nowrap mt-auto ${isFavourite
-                            ? 'border-primary bg-primary text-white'
-                            : 'border-gray-300 text-gray-600 hover:border-primary hover:text-primary'
-                            }`}
-                    >
-                        <svg className="w-5 h-5 flex-shrink-0" fill={isFavourite ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                        </svg>
-                        <span className="truncate">{isFavourite ? t.product.inFavorites : t.product.addToFavorites}</span>
-                    </button>
+                    <div className="mt-auto grid grid-cols-[1fr_auto] gap-2">
+                        <button
+                            onClick={() => onAddToCart?.(product.id)}
+                            disabled={product.inStock === false}
+                            className="flex min-h-9 w-full items-center justify-center gap-1.5 whitespace-nowrap rounded-lg bg-primary px-2 py-2 text-xs font-bold text-white shadow-lg shadow-red-900/20 transition hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-600 sm:min-h-10 sm:gap-2 sm:px-4 sm:text-sm"
+                        >
+                            <svg className="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h9.5l3-7H5.4M7 13L5.4 5M7 13l-1.2 1.2C5.2 14.8 5.6 16 6.5 16H17m-9 4a1 1 0 100-2 1 1 0 000 2zm8 0a1 1 0 100-2 1 1 0 000 2z" />
+                            </svg>
+                            <span className="truncate">Savatchaga</span>
+                        </button>
+
+                        <button
+                            onClick={() => onToggleFavourite(product.id)}
+                            className={`flex min-h-9 w-10 items-center justify-center rounded-lg border transition sm:min-h-10 sm:w-11 ${isFavourite
+                                ? 'border-primary bg-primary text-white shadow-lg shadow-red-900/20'
+                                : 'border-gray-200 bg-white text-gray-700 hover:border-primary hover:bg-red-50 hover:text-primary'
+                                }`}
+                            aria-label={isFavourite ? t.product.inFavorites : t.product.addToFavorites}
+                        >
+                            <svg className="h-5 w-5 flex-shrink-0" fill={isFavourite ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                            </svg>
+                        </button>
+                    </div>
                 </div>
             </div>
 

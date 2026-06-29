@@ -78,6 +78,34 @@ const VisitStatSchema = new mongoose.Schema({
     timestamp: { type: Date, default: Date.now }
 });
 
+const OrderItemSchema = new mongoose.Schema({
+    product_id: { type: Number, required: true },
+    product_name: { type: String, required: true },
+    unit: { type: String, default: 'piece' },
+    quantity: { type: Number, default: 1 },
+    amount_grams: Number
+}, { _id: false });
+
+const OrderSchema = new mongoose.Schema({
+    id: { type: Number, unique: true },
+    customer_name: { type: String, required: true },
+    customer_phone: { type: String, required: true },
+    customer_telegram: String,
+    message: String,
+    items: [OrderItemSchema],
+    status: { type: String, default: 'new', enum: ['new', 'contacted', 'done', 'cancelled'] },
+    created_at: { type: Date, default: Date.now }
+});
+
+const TelegramAdminSchema = new mongoose.Schema({
+    id: { type: Number, unique: true },
+    chat_id: { type: String, required: true, unique: true },
+    name: String,
+    added_by: String,
+    is_owner: { type: Boolean, default: false },
+    created_at: { type: Date, default: Date.now }
+});
+
 // Auto-increment logic for ID fields since we migrated from relational DB where IDs were sequential ints
 // For new inserts, we will manually assign the next ID in controllers, or use a pre-save hook.
 // To keep it simple, we'll assign the highest id + 1 in controllers when inserting new documents.
@@ -88,3 +116,5 @@ export const Product = mongoose.model('products', ProductSchema);
 export const Review = mongoose.model('reviews', ReviewSchema);
 export const CarouselItem = mongoose.model('carousel_items', CarouselItemSchema);
 export const VisitStat = mongoose.model('visit_stats', VisitStatSchema);
+export const Order = mongoose.model('orders', OrderSchema);
+export const TelegramAdmin = mongoose.model('telegram_admins', TelegramAdminSchema);

@@ -1,11 +1,17 @@
+/* global process */
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { connectDB } from './db.js';
-import { User, Category, Product, Review, CarouselItem, VisitStat } from './models.js';
+import { User, Category, Product, Review, CarouselItem, VisitStat, Order, TelegramAdmin } from './models.js';
+import { createTelegramBot, getTelegramConfig } from './telegramBot.js';
 import { v4 as uuidv4 } from 'uuid'; // we need to install uuid
 
 dotenv.config();
+
+if (process.env.ALLOW_INSECURE_TLS === 'true') {
+    process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+}
 
 const app = express();
 app.use(cors());
@@ -18,6 +24,12 @@ const getNextId = async (Model) => {
     const highest = await Model.findOne().sort('-id').exec();
     return highest && highest.id ? highest.id + 1 : 1;
 };
+
+const telegramBot = createTelegramBot({
+    ...getTelegramConfig(),
+    AdminModel: TelegramAdmin,
+    getNextId
+});
 
 // ==================== USER ROUTES ====================
 app.post('/api/users/register', async (req, res) => {
@@ -298,5 +310,65 @@ app.delete('/api/reviews/:id', async (req, res) => {
     }
 });
 
+// ==================== ORDER ROUTES ====================
+app.post('/api/orders', async (req, res) => {
+    try {
+        const { customerName, customerPhone, customerTelegram, message, items } = req.body;
+
+        if (!customerName || !customerPhone || !Array.isArray(items) || items.length === 0) {
+            return res.status(400).json({ error: 'Customer name, phone and order items are required' });
+        }
+
+        const normalizedItems = items.map((item) => ({
+            product_id: Number(item.productId),
+            product_name: item.productName,
+            unit: item.unit || 'piece',
+            quantity: Number(item.quantity || 1),
+            amount_grams: item.amountGrams !== undefined ? Number(item.amountGrams) : undefined
+        })).filter((item) => item.product_id && item.product_name);
+
+        if (normalizedItems.length === 0) {
+            return res.status(400).json({ error: 'Order items are invalid' });
+        }
+
+        const id = await getNextId(Order);
+        const order = new Order({
+            id,
+            customer_name: customerName,
+            customer_phone: customerPhone,
+            customer_telegram: customerTelegram || '',
+            message: message || '',
+            items: normalizedItems
+        });
+
+        await order.save();
+
+        let telegram = { sent: 0, skipped: true };
+        try {
+            telegram = await telegramBot.notifyOrder(order);
+        } catch (notifyError) {
+            console.error('Telegram order notification error:', notifyError);
+        }
+
+        res.json({ order, telegram });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/orders', async (req, res) => {
+    try {
+        const orders = await Order.find().sort({ created_at: -1 });
+        res.json(orders);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 const PORT = process.env.PORT || 8000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+    if (process.env.START_TELEGRAM_BOT_IN_SERVER === 'true') {
+        telegramBot.start();
+    }
+});

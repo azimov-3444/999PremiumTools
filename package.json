@@ -8,7 +8,8 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "server": "node server/server.js"
+    "server": "node server/server.js",
+    "bot": "npm --prefix telegrambot run dev"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.105.1",

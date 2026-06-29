@@ -7,6 +7,7 @@ import Footer from './components/Footer';
 import Landing from './components/Landing';
 import Catalog from './components/Catalog';
 import Favourites from './components/Favourites';
+import Cart from './components/Cart';
 import Login from './components/Login';
 import About from './components/About';
 import Contact from './components/Contact';
@@ -43,6 +44,7 @@ function AppContent() {
   const [products, setProducts] = useState([]);
   const [carouselItems, setCarouselItems] = useState([]);
   const [favourites, setFavourites] = useState([]);
+  const [cart, setCart] = useState([]);
   const [visitStats, setVisitStats] = useState({
     totalVisits: 0,
     uniqueVisitors: [],
@@ -70,6 +72,16 @@ function AppContent() {
     const savedFavourites = localStorage.getItem('favourites');
     if (savedFavourites) setFavourites(JSON.parse(savedFavourites));
 
+    const savedCart = localStorage.getItem('cart');
+    if (savedCart) {
+      try {
+        setCart(JSON.parse(savedCart));
+      } catch (error) {
+        console.error('Saved cart is invalid:', error);
+        localStorage.removeItem('cart');
+      }
+    }
+
     loadPublicData();
   }, []);
 
@@ -89,6 +101,10 @@ function AppContent() {
   useEffect(() => {
     localStorage.setItem('favourites', JSON.stringify(favourites));
   }, [favourites]);
+
+  useEffect(() => {
+    localStorage.setItem('cart', JSON.stringify(cart));
+  }, [cart]);
 
   // Load only storefront data on initial page load.
   const loadPublicData = async () => {
@@ -191,6 +207,71 @@ function AppContent() {
     } else {
       setFavourites([...favourites, productId]);
     }
+  };
+
+  const isWeightProduct = (product) => ['kg', 'gr'].includes(product?.unit);
+
+  const handleAddToCart = (productId) => {
+    const product = products.find((item) => Number(item.id) === Number(productId));
+    if (!product || product.inStock === false) return;
+
+    setCart((currentCart) => {
+      const existingItem = currentCart.find((item) => Number(item.productId) === Number(productId));
+
+      if (existingItem) {
+        return currentCart.map((item) =>
+          Number(item.productId) === Number(productId)
+            ? { ...item, quantity: isWeightProduct(product) ? item.quantity : item.quantity + 1 }
+            : item
+        );
+      }
+
+      return [...currentCart, {
+        productId: product.id,
+        quantity: 1,
+        amountGrams: isWeightProduct(product) ? 100 : undefined
+      }];
+    });
+
+    toast.success("Mahsulot savatchaga qo'shildi!");
+  };
+
+  const handleUpdateCartQuantity = (productId, quantity) => {
+    if (quantity <= 0) {
+      setCart((currentCart) => currentCart.filter((item) => Number(item.productId) !== Number(productId)));
+      return;
+    }
+
+    setCart((currentCart) =>
+      currentCart.map((item) =>
+        Number(item.productId) === Number(productId)
+          ? { ...item, quantity }
+          : item
+      )
+    );
+  };
+
+  const handleRemoveFromCart = (productId) => {
+    setCart((currentCart) => currentCart.filter((item) => Number(item.productId) !== Number(productId)));
+  };
+
+  const handleUpdateCartAmountGrams = (productId, amountGrams) => {
+    const safeAmount = Math.max(1, Number(amountGrams) || 1);
+
+    setCart((currentCart) =>
+      currentCart.map((item) =>
+        Number(item.productId) === Number(productId)
+          ? { ...item, amountGrams: safeAmount, quantity: 1 }
+          : item
+      )
+    );
+  };
+
+  const handleSubmitOrder = async (orderData) => {
+    const result = await api.createOrder(orderData);
+    setCart([]);
+    toast.success("Buyurtma yuborildi! Tez orada siz bilan bog'lanamiz.");
+    return result;
   };
 
   const handleAddCategory = async (name) => {
@@ -432,6 +513,7 @@ function AppContent() {
         onLogout={handleLogout}
         onNavigate={handleNavigate}
         favouritesCount={favourites.length}
+        cartCount={cart.reduce((sum, item) => sum + item.quantity, 0)}
       />
 
       <Routes>
@@ -443,6 +525,7 @@ function AppContent() {
               categories={categories}
               onToggleFavourite={handleToggleFavourite}
               favourites={favourites}
+              onAddToCart={handleAddToCart}
               onNavigate={handleNavigate}
               carouselItems={carouselItems}
             />
@@ -457,6 +540,7 @@ function AppContent() {
               categories={categories}
               onToggleFavourite={handleToggleFavourite}
               favourites={favourites}
+              onAddToCart={handleAddToCart}
             />
           }
         />
@@ -468,6 +552,21 @@ function AppContent() {
               favourites={favourites}
               products={productsWithReviews}
               onToggleFavourite={handleToggleFavourite}
+              onAddToCart={handleAddToCart}
+            />
+          }
+        />
+
+        <Route
+          path="/cart"
+          element={
+            <Cart
+              cart={cart}
+              products={productsWithReviews}
+              onUpdateQuantity={handleUpdateCartQuantity}
+              onUpdateAmountGrams={handleUpdateCartAmountGrams}
+              onRemoveFromCart={handleRemoveFromCart}
+              onSubmitOrder={handleSubmitOrder}
             />
           }
         />

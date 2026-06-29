@@ -99,48 +99,50 @@ const Landing = ({
     };
 
     return (
-        <main className="bg-gray-50 overflow-hidden">
+        <main className="overflow-hidden bg-[linear-gradient(180deg,#f8fafc_0%,#eef2f7_45%,#ffffff_100%)]">
             <SEO
                 title={t.landing.heroTitle}
                 description={t.landing.heroSubtitle}
             />
 
             <section className="relative bg-slate-950 text-white">
-                <div className="relative min-h-[430px] overflow-hidden sm:min-h-[600px] lg:min-h-[calc(100vh-4rem)]">
+                <div className="relative min-h-[470px] overflow-hidden sm:min-h-[620px] lg:min-h-[calc(100vh-4rem)]">
                     {bannerItems.length > 0 ? (
                         bannerItems.map((banner, index) => (
                             <img
                                 key={banner.id || `${banner.image}-${index}`}
                                 src={banner.image}
                                 alt=""
-                                className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ${index === activeBanner ? 'opacity-100' : 'opacity-0'}`}
+                                className={`absolute inset-0 h-full w-full object-cover transition duration-[1200ms] ${index === activeBanner ? 'scale-100 opacity-100' : 'scale-[1.04] opacity-0'}`}
                             />
                         ))
                     ) : (
-                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(220,38,38,0.35),transparent_32%),linear-gradient(135deg,#111827,#030712)]" />
+                        <div className="absolute inset-0 bg-[linear-gradient(135deg,#111827,#030712)]" />
                     )}
 
-                    <div className="absolute inset-0 bg-gradient-to-b from-slate-950/92 via-slate-950/72 to-slate-950/58 md:bg-gradient-to-r md:from-slate-950 md:via-slate-950/82 md:to-slate-950/35" />
+                    <div className="absolute inset-0 bg-gradient-to-b from-slate-950/92 via-slate-950/74 to-slate-950/62 md:bg-gradient-to-r md:from-slate-950 md:via-slate-950/82 md:to-slate-950/28" />
+                    <div className="absolute inset-0 opacity-25 [background-image:linear-gradient(rgba(255,255,255,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.08)_1px,transparent_1px)] [background-size:52px_52px]" />
+                    <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-slate-950 to-transparent" />
 
-                    <div className="container relative z-10 mx-auto flex min-h-[430px] items-center px-4 py-10 sm:min-h-[600px] sm:px-6 sm:py-14 md:py-20 lg:min-h-[calc(100vh-4rem)] lg:px-8 lg:py-24">
-                        <div className="w-full max-w-3xl text-center md:text-left">
-                            <div className="inline-flex max-w-full items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-[11px] font-semibold text-white/90 backdrop-blur sm:px-4 sm:py-2 sm:text-sm">
-                                <span className="h-1.5 w-1.5 rounded-full bg-primary sm:h-2 sm:w-2" />
+                    <div className="container relative z-10 mx-auto flex min-h-[470px] items-center px-4 py-10 sm:min-h-[620px] sm:px-6 sm:py-14 md:py-20 lg:min-h-[calc(100vh-4rem)] lg:px-8 lg:py-24">
+                        <div className="w-full max-w-3xl animate-fade-up text-center md:text-left">
+                            <div className="inline-flex max-w-full items-center gap-2 rounded-full border border-white/15 bg-white/12 px-3 py-1.5 text-[11px] font-bold text-white/92 shadow-2xl shadow-black/20 backdrop-blur-xl sm:px-4 sm:py-2 sm:text-sm">
+                                <span className="h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_18px_rgba(220,38,38,0.95)] sm:h-2 sm:w-2" />
                                 {t.landing.badge}
                             </div>
 
-                            <h1 className="mt-4 text-2xl font-black leading-tight tracking-tight sm:mt-6 sm:text-5xl lg:text-6xl">
+                            <h1 className="text-balance mt-4 text-3xl font-black leading-tight tracking-tight sm:mt-6 sm:text-5xl lg:text-7xl">
                                 {t.landing.heroTitle}
                             </h1>
 
-                            <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-white/78 sm:mt-6 sm:text-lg sm:leading-8 md:mx-0">
+                            <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-white/80 sm:mt-6 sm:text-lg sm:leading-8 md:mx-0">
                                 {t.landing.heroSubtitle}
                             </p>
 
                             <div className="mt-5 flex flex-col gap-2 sm:mx-auto sm:mt-7 sm:max-w-md sm:flex-row sm:gap-3 md:mx-0 md:max-w-none">
                                 <button
                                     onClick={() => onNavigate('catalog')}
-                                    className="inline-flex min-h-10 flex-1 items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-bold text-white shadow-xl shadow-red-900/30 transition hover:-translate-y-0.5 hover:bg-red-700 sm:min-h-12 sm:flex-none sm:px-7 sm:py-4 sm:text-base"
+                                    className="premium-button inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-black text-white transition hover:-translate-y-0.5 hover:bg-red-700 sm:min-h-12 sm:flex-none sm:px-7 sm:py-4 sm:text-base"
                                 >
                                     {t.landing.exploreCatalog}
                                     <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -149,7 +151,7 @@ const Landing = ({
                                 </button>
                                 <button
                                     onClick={() => onNavigate('contact')}
-                                    className="inline-flex min-h-10 flex-1 items-center justify-center rounded-lg border border-white/25 bg-white/10 px-4 py-2.5 text-sm font-bold text-white backdrop-blur transition hover:bg-white/20 sm:min-h-12 sm:flex-none sm:px-7 sm:py-4 sm:text-base"
+                                    className="inline-flex min-h-11 flex-1 items-center justify-center rounded-lg border border-white/25 bg-white/12 px-4 py-2.5 text-sm font-black text-white shadow-xl shadow-black/15 backdrop-blur-xl transition hover:-translate-y-0.5 hover:bg-white/22 sm:min-h-12 sm:flex-none sm:px-7 sm:py-4 sm:text-base"
                                 >
                                     {t.landing.consultation}
                                 </button>
@@ -164,7 +166,7 @@ const Landing = ({
                                     key={banner.id || index}
                                     type="button"
                                     onClick={() => setActiveBanner(index)}
-                                    className={`h-1.5 rounded-full transition-all sm:h-2 ${index === activeBanner ? 'w-6 bg-primary sm:w-8' : 'w-1.5 bg-white/70 hover:bg-white sm:w-2'}`}
+                                    className={`h-1.5 rounded-full transition-all sm:h-2 ${index === activeBanner ? 'w-8 bg-primary sm:w-10' : 'w-1.5 bg-white/70 hover:bg-white sm:w-2'}`}
                                     aria-label={`Banner ${index + 1}`}
                                 />
                             ))}
@@ -173,12 +175,12 @@ const Landing = ({
                 </div>
             </section>
 
-            <section className="container relative z-20 mx-auto px-4 py-6 sm:px-6 sm:py-10 lg:px-8">
-                <div className="grid grid-cols-3 gap-2 rounded-lg border border-gray-100 bg-white p-3 shadow-xl sm:gap-4 sm:p-5 md:p-7">
-                    {heroStats.map((stat) => (
-                        <div key={stat.title} className="rounded-lg bg-gray-50 p-2.5 text-center sm:p-5">
+            <section className="container relative z-20 mx-auto -mt-10 px-4 pb-8 sm:-mt-16 sm:px-6 sm:pb-12 lg:px-8">
+                <div className="premium-surface animate-border-glow grid grid-cols-3 gap-2 rounded-lg p-3 sm:gap-4 sm:p-5 md:p-7">
+                    {heroStats.map((stat, index) => (
+                        <div key={stat.title} className="animate-fade-up rounded-lg bg-white/70 p-2.5 text-center shadow-sm ring-1 ring-white/70 sm:p-5" style={{ animationDelay: `${index * 90}ms` }}>
                             <p className="text-xl font-black text-primary sm:text-4xl">{stat.value}</p>
-                            <p className="mt-1 text-[11px] font-bold leading-tight text-gray-900 sm:mt-2 sm:text-lg">{stat.title}</p>
+                            <p className="mt-1 text-[11px] font-black leading-tight text-gray-900 sm:mt-2 sm:text-lg">{stat.title}</p>
                             <p className="mt-1 hidden text-sm leading-6 text-gray-500 sm:block">{stat.text}</p>
                         </div>
                     ))}
@@ -194,21 +196,22 @@ const Landing = ({
                     </div>
 
                     <div className="grid grid-cols-2 gap-2 sm:gap-4 lg:grid-cols-4">
-                        {categories.slice(0, 8).map((category) => (
+                        {categories.slice(0, 8).map((category, index) => (
                             <button
                                 key={category.id}
                                 onClick={() => onNavigate(`catalog?category=${category.id}`)}
-                                className="group rounded-lg border border-gray-100 bg-white p-3 text-left shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-xl sm:p-5"
+                                className="premium-card animate-fade-up group rounded-lg border border-gray-100 bg-white p-3 text-left shadow-sm transition hover:border-primary/30 sm:p-5"
+                                style={{ animationDelay: `${index * 55}ms` }}
                             >
-                                <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-red-50 text-primary transition group-hover:bg-primary group-hover:text-white sm:h-12 sm:w-12">
+                                <span className="relative z-10 flex h-9 w-9 items-center justify-center rounded-lg bg-red-50 text-primary transition group-hover:bg-primary group-hover:text-white sm:h-12 sm:w-12">
                                     <svg className="h-4 w-4 sm:h-6 sm:w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         {getCategoryIconPath(localizedName(category))}
                                     </svg>
                                 </span>
-                                <span className="mt-3 block text-sm font-bold leading-snug text-gray-900 group-hover:text-primary sm:mt-5 sm:text-lg">
+                                <span className="relative z-10 mt-3 block text-sm font-black leading-snug text-gray-900 group-hover:text-primary sm:mt-5 sm:text-lg">
                                     {localizedName(category)}
                                 </span>
-                                <span className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-primary sm:mt-3 sm:text-sm">
+                                <span className="relative z-10 mt-2 inline-flex items-center gap-1 text-xs font-bold text-primary sm:mt-3 sm:text-sm">
                                     {t.landing.openCategory}
                                     <svg className="h-3 w-3 transition group-hover:translate-x-1 sm:h-4 sm:w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -228,28 +231,28 @@ const Landing = ({
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 sm:gap-4 lg:grid-cols-4">
-                    {features.map((feature) => (
-                        <div key={feature.title} className="rounded-lg border border-gray-100 bg-white p-3 shadow-sm transition hover:-translate-y-1 hover:shadow-xl sm:p-6">
-                            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-red-50 text-primary sm:h-12 sm:w-12">
+                    {features.map((feature, index) => (
+                        <div key={feature.title} className="premium-card group animate-fade-up rounded-lg border border-gray-100 bg-white p-3 shadow-sm sm:p-6" style={{ animationDelay: `${index * 70}ms` }}>
+                            <div className="relative z-10 flex h-9 w-9 items-center justify-center rounded-lg bg-red-50 text-primary transition group-hover:bg-primary group-hover:text-white sm:h-12 sm:w-12">
                                 <svg className="h-4 w-4 sm:h-6 sm:w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     {feature.icon}
                                 </svg>
                             </div>
-                            <h3 className="mt-3 text-sm font-bold leading-snug text-gray-900 sm:mt-5 sm:text-lg">{feature.title}</h3>
-                            <p className="mt-1.5 text-xs leading-5 text-gray-600 sm:mt-3 sm:text-sm sm:leading-6">{feature.text}</p>
+                            <h3 className="relative z-10 mt-3 text-sm font-black leading-snug text-gray-900 sm:mt-5 sm:text-lg">{feature.title}</h3>
+                            <p className="relative z-10 mt-1.5 text-xs leading-5 text-gray-600 sm:mt-3 sm:text-sm sm:leading-6">{feature.text}</p>
                         </div>
                     ))}
                 </div>
             </section>
 
             <section className="relative overflow-hidden bg-slate-950 py-9 text-white sm:py-16 md:py-20">
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(220,38,38,0.35),transparent_30%),radial-gradient(circle_at_80%_10%,rgba(255,255,255,0.10),transparent_22%)]" />
+                <div className="absolute inset-0 opacity-20 [background-image:linear-gradient(rgba(255,255,255,0.10)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.10)_1px,transparent_1px)] [background-size:44px_44px]" />
                 <div className="container relative z-10 mx-auto px-4 text-center sm:px-6 lg:px-8">
                     <h2 className="mx-auto max-w-3xl text-xl font-black leading-tight sm:text-3xl md:text-5xl">{t.landing.bottomTitle}</h2>
                     <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-white/75 sm:mt-5 sm:text-lg sm:leading-8">{t.landing.bottomSubtitle}</p>
                     <button
                         onClick={() => onNavigate('catalog')}
-                        className="mt-5 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-bold text-white shadow-xl shadow-red-900/30 transition hover:bg-red-700 hover:-translate-y-0.5 sm:mt-8 sm:min-h-12 sm:w-auto sm:px-8 sm:py-4 sm:text-lg"
+                        className="premium-button mt-5 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-black text-white transition hover:-translate-y-0.5 hover:bg-red-700 sm:mt-8 sm:min-h-12 sm:w-auto sm:px-8 sm:py-4 sm:text-lg"
                     >
                         {t.landing.enterStore}
                         <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
