@@ -13,13 +13,13 @@ const escapeHtml = (value = '') => String(value)
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;');
 
-export const formatOrderMessage = (order) => {
-    const items = order.items.map((item, index) => {
+export const formatOrderMessage = (order = {}) => {
+    const items = (order.items || []).map((item, index) => {
         const amount = ['kg', 'gr'].includes(item.unit)
             ? `${item.amount_grams || 0} gr`
             : `${item.quantity || 1} ta`;
 
-        return `${index + 1}. ${escapeHtml(item.product_name)} - ${amount}`;
+        return `${index + 1}. ${escapeHtml(item.product_name || 'Mahsulot')} - ${amount}`;
     }).join('\n');
 
     const telegramLine = order.customer_telegram
@@ -31,14 +31,14 @@ export const formatOrderMessage = (order) => {
         : '';
 
     return [
-        '<b>Yangi buyurtma</b>',
-        `#${order.id}`,
+        '<b>🛍 Yangi buyurtma!</b>',
+        `<b>Buyurtma ID:</b> #${order.id || ''}`,
         '',
-        `<b>Mijoz:</b> ${escapeHtml(order.customer_name)}`,
-        `<b>Telefon:</b> ${escapeHtml(order.customer_phone)}${telegramLine}`,
+        `<b>Mijoz:</b> ${escapeHtml(order.customer_name || 'Noma\'lum')}`,
+        `<b>Telefon:</b> ${escapeHtml(order.customer_phone || 'Kiritilmagan')}${telegramLine}`,
         '',
         '<b>Mahsulotlar:</b>',
-        items,
+        items || 'Mahsulotlar ko\'rsatilmadi',
         noteLine
     ].filter(Boolean).join('\n');
 };
@@ -247,6 +247,11 @@ export const createTelegramBot = ({ token, ownerIds = [], envAdminIds = [], Admi
                 }
             } catch (error) {
                 console.error('Telegram polling error:', error.message);
+                if (error.message && (error.message.includes('401') || error.message.includes('Unauthorized'))) {
+                    console.error('Telegram bot token is invalid or expired. Stopping polling loop.');
+                    polling = false;
+                    break;
+                }
                 await new Promise((resolve) => setTimeout(resolve, 5000));
             }
         }

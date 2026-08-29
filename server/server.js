@@ -19,6 +19,15 @@ app.use(express.json());
 
 connectDB();
 
+// ==================== HEALTH CHECK FOR UPTIMEROBOT ====================
+app.get(['/', '/health', '/api/health'], (req, res) => {
+    res.status(200).json({ 
+        status: 'ok', 
+        message: '999 Premium Tools Backend API is running', 
+        timestamp: new Date().toISOString() 
+    });
+});
+
 // --- Helpers ---
 const getNextId = async (Model) => {
     const highest = await Model.findOne().sort('-id').exec();
@@ -368,7 +377,11 @@ app.get('/api/orders', async (req, res) => {
 const PORT = process.env.PORT || 8000;
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
-    if (process.env.START_TELEGRAM_BOT_IN_SERVER === 'true') {
+    const shouldStartBot = process.env.TELEGRAM_BOT_TOKEN && process.env.START_TELEGRAM_BOT_IN_SERVER !== 'false';
+    if (shouldStartBot) {
+        console.log('Starting Telegram bot polling...');
         telegramBot.start();
+    } else {
+        console.log('Telegram bot polling skipped (token missing or START_TELEGRAM_BOT_IN_SERVER=false).');
     }
 });
