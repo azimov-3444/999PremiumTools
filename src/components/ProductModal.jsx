@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import ReactDOM from 'react-dom';
 import { toast } from 'react-toastify';
 import * as api from '../api/supabaseApi';
 import { useLanguage } from '../i18n/LanguageContext';
@@ -146,13 +147,13 @@ const ProductModal = ({ product, onClose, onAddToCart, onToggleFavourite, isFavo
         });
     };
 
-    return (
+    return ReactDOM.createPortal(
         <div
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-950/80 p-2 sm:p-4 backdrop-blur-md transition-all duration-300"
+            className="fixed inset-0 z-[99999] flex items-center justify-center bg-gray-950/85 p-2 sm:p-4 backdrop-blur-md transition-all duration-300"
             onClick={onClose}
         >
             <article
-                className="relative flex flex-col w-full h-full sm:w-[96vw] sm:h-[94vh] md:w-[94vw] md:h-[92vh] max-w-[1500px] overflow-hidden rounded-none sm:rounded-3xl bg-white shadow-[0_30px_90px_rgba(15,23,42,0.5)] ring-1 ring-gray-900/10"
+                className="relative flex flex-col w-full h-full sm:w-[96vw] sm:h-[94vh] md:w-[94vw] md:h-[92vh] max-w-[1500px] overflow-hidden rounded-none sm:rounded-3xl bg-white shadow-[0_35px_100px_rgba(15,23,42,0.5)] ring-1 ring-gray-900/10"
                 onClick={(event) => event.stopPropagation()}
             >
                 {/* Header */}
@@ -461,7 +462,8 @@ const ProductModal = ({ product, onClose, onAddToCart, onToggleFavourite, isFavo
                     </div>
                 </div>
             </article>
-        </div>
+        </div>,
+        document.body
     );
 };
 
