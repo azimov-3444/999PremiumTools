@@ -79,6 +79,14 @@ export const createTelegramBot = ({ token, ownerIds = [], envAdminIds = [], Admi
         ...extra
     });
 
+    const adminKeyboard = {
+        keyboard: [
+            [{ text: "👑 Adminlar ro'yxati" }, { text: "📊 Buyurtmalar statistikasi" }],
+            [{ text: "➕ Admin qo'shish" }, { text: "❌ Admin o'chirish" }]
+        ],
+        resize_keyboard: true
+    };
+
     const getAllAdminIds = async () => {
         const dbAdmins = await AdminModel.find();
         return Array.from(new Set([
@@ -132,12 +140,22 @@ export const createTelegramBot = ({ token, ownerIds = [], envAdminIds = [], Admi
                 const name = [message.from?.first_name, message.from?.last_name].filter(Boolean).join(' ');
                 await ensureAdmin(chatId, name || message.from?.username || 'Bot owner', 'first_start', true);
                 await sendMessage(chatId, [
-                    '<b>999 Premium Tools bot</b>',
-                    'Siz bot egasi qilib tayinlandingiz.',
-                    `Sizning chat ID: <code>${chatId}</code>`,
+                    '<b>👑 999 Premium Tools Admin Bot</b>',
+                    'Siz bot egasi (Owner) qilib tayinlandingiz.',
+                    `Sizning Chat ID: <code>${chatId}</code>`,
                     '',
-                    "Endi /admin orqali panelni ochib, /addadmin CHAT_ID Ism bilan admin qo'sha olasiz."
-                ].join('\n'));
+                    "Quyidagi tugmalar orqali panelni boshqarishingiz va <code>/addadmin CHAT_ID Ismi</code> yordamida admin qo'shishingiz mumkin."
+                ].join('\n'), { reply_markup: adminKeyboard });
+                return;
+            }
+
+            if (await isAdmin(chatId)) {
+                await sendMessage(chatId, [
+                    '<b>👑 999 Premium Tools Admin Panel</b>',
+                    `Xush kelibsiz! Chat ID: <code>${chatId}</code>`,
+                    '',
+                    'Boshqaruv tugmalaridan birini tanlang:'
+                ].join('\n'), { reply_markup: adminKeyboard });
                 return;
             }
 
@@ -145,79 +163,135 @@ export const createTelegramBot = ({ token, ownerIds = [], envAdminIds = [], Admi
                 '<b>999 Premium Tools bot</b>',
                 `Sizning chat ID: <code>${chatId}</code>`,
                 '',
-                "Admin bo'lish uchun bot yaratuvchisi shu ID ni qo'shishi kerak."
+                "Admin bo'lish uchun bot yaratuvchisiga shu Chat ID ni yuboring."
             ].join('\n'));
             return;
         }
         
         if (!(await isAdmin(chatId))) {
-            await sendMessage(chatId, 'Bu bot faqat adminlar uchun. Chat ID ni bot yaratuvchisiga yuboring.');
+            await sendMessage(chatId, `Bu bot faqat adminlar uchun. Sizning Chat ID: <code>${chatId}</code>. ID ni yaratuvchiga yuboring.`);
             return;
         }
 
-        if (command === '/admin' || command === '/help') {
+        if (command === '/admin' || command === '/help' || text === '👑 Admin Panel') {
             await sendMessage(chatId, [
-                '<b>Admin panel</b>',
-                "/admins - adminlar ro'yxati",
-                "/addadmin CHAT_ID Ism - yangi admin qo'shish",
-                '/removeadmin CHAT_ID - adminni olib tashlash',
+                '<b>👑 Admin Panel</b>',
                 '',
-                "Eslatma: admin qo'shish/o'chirish faqat bot yaratuvchisiga ruxsat."
-            ].join('\n'));
+                "<b>Mavjud tugmalar:</b>",
+                "• <b>👑 Adminlar ro'yxati</b> - barcha adminlarni ko'rish",
+                "• <b>➕ Admin qo'shish</b> - yangi admin qo'shish yo'riqnomasi",
+                "• <b>❌ Admin o'chirish</b> - adminni o'chirish yo'riqnomasi",
+                "• <b>📊 Buyurtmalar statistikasi</b> - xabarlar holati",
+                '',
+                "<b>Buyruqlar:</b>",
+                "<code>/addadmin CHAT_ID Ismi</code> - yangi admin qo'shish",
+                "<code>/removeadmin CHAT_ID</code> - adminni olib tashlash"
+            ].join('\n'), { reply_markup: adminKeyboard });
             return;
         }
 
-        if (command === '/admins') {
+        if (text === "👑 Adminlar ro'yxati" || command === '/admins') {
             const dbAdmins = await AdminModel.find().sort({ is_owner: -1, created_at: 1 });
             const envLines = [
-                ...ownerIds.map((id) => `- <code>${escapeHtml(id)}</code> owner (.env)`),
-                ...envAdminIds.map((id) => `- <code>${escapeHtml(id)}</code> admin (.env)`)
+                ...ownerIds.map((id) => `- <code>${escapeHtml(id)}</code> 👑 Owner (.env)`),
+                ...envAdminIds.map((id) => `- <code>${escapeHtml(id)}</code> 🛡 Admin (.env)`)
             ];
             const dbLines = dbAdmins.map((admin) => (
-                `- <code>${escapeHtml(admin.chat_id)}</code> ${admin.is_owner ? 'owner' : 'admin'}${admin.name ? ` - ${escapeHtml(admin.name)}` : ''}`
+                `- <code>${escapeHtml(admin.chat_id)}</code> ${admin.is_owner ? '👑 Owner' : '🛡 Admin'}${admin.name ? ` - <b>${escapeHtml(admin.name)}</b>` : ''}`
             ));
-            const lines = [...envLines, ...dbLines];
-            await sendMessage(chatId, `<b>Adminlar:</b>\n${lines.length > 0 ? lines.join('\n') : 'Hali admin yoq'}`);
+            const lines = Array.from(new Set([...envLines, ...dbLines]));
+            await sendMessage(chatId, [
+                '<b>👑 Bot Adminlari Ro\'yxati:</b>',
+                '',
+                lines.length > 0 ? lines.join('\n') : 'Hali adminlar yo\'q',
+                '',
+                "Yangi admin qo'shish uchun: <code>/addadmin CHAT_ID Ismi</code>"
+            ].join('\n'), { reply_markup: adminKeyboard });
+            return;
+        }
+
+        if (text === "➕ Admin qo'shish") {
+            await sendMessage(chatId, [
+                "<b>➕ Yangi Admin Qo'shish</b>",
+                "",
+                "Admin qo'shish uchun quyidagi formatda xabar yuboring:",
+                "<code>/addadmin CHAT_ID Ismi</code>",
+                "",
+                "<b>Misol:</b>",
+                "<code>/addadmin 7063153677 Humoyun</code>",
+                "",
+                "<i>Eslatma: Qo'shilgan admindagilarga ham saytdagi barcha yangi buyurtmalar darhol yuboriladi.</i>"
+            ].join('\n'), { reply_markup: adminKeyboard });
+            return;
+        }
+
+        if (text === "❌ Admin o'chirish") {
+            await sendMessage(chatId, [
+                "<b>❌ Adminni Olib Tashlash</b>",
+                "",
+                "Adminni o'chirish uchun quyidagi formatda xabar yuboring:",
+                "<code>/removeadmin CHAT_ID</code>",
+                "",
+                "<b>Misol:</b>",
+                "<code>/removeadmin 7063153677</code>"
+            ].join('\n'), { reply_markup: adminKeyboard });
+            return;
+        }
+
+        if (text === "📊 Buyurtmalar statistikasi" || command === '/stats') {
+            const allAdmins = await getAllAdminIds();
+            await sendMessage(chatId, [
+                "<b>📊 Bot Holati va Statistikasi</b>",
+                "",
+                `• Jami faol adminlar: <b>${allAdmins.length} ta</b>`,
+                "• Status: 🟢 Faol (Online)",
+                "• Zakazlar xabarnomasi: 🟢 Ulab qo'yilgan"
+            ].join('\n'), { reply_markup: adminKeyboard });
             return;
         }
 
         if (command === '/addadmin') {
             if (!(await isOwner(chatId))) {
-                await sendMessage(chatId, "Admin qo'shish faqat bot yaratuvchisiga ruxsat.");
+                await sendMessage(chatId, "❌ Admin qo'shish faqat bot yaratuvchisi (Owner) ga ruxsat berilgan.");
                 return;
             }
 
             const newAdminId = args[0];
             const name = args.slice(1).join(' ');
             if (!newAdminId) {
-                await sendMessage(chatId, 'Format: /addadmin CHAT_ID Ism');
+                await sendMessage(chatId, '❌ Format xato! To\'g'ri format:\n<code>/addadmin CHAT_ID Ismi</code>\n\nMisol:\n<code>/addadmin 7063153677 Humoyun</code>');
                 return;
             }
 
-            await ensureAdmin(newAdminId, name, chatId);
-            await sendMessage(chatId, `Admin qo'shildi: <code>${escapeHtml(newAdminId)}</code>`);
-            await sendMessage(newAdminId, "Siz 999 Premium Tools buyurtma botiga admin qilib qo'shildingiz.");
+            await ensureAdmin(newAdminId, name || 'Admin', chatId);
+            await sendMessage(chatId, `✅ Yangi admin muvaffaqiyatli qo'shildi!\nChat ID: <code>${escapeHtml(newAdminId)}</code>\nIsm: <b>${escapeHtml(name || 'Admin')}</b>`, { reply_markup: adminKeyboard });
+            
+            try {
+                await sendMessage(newAdminId, "🎉 Siz 999 Premium Tools buyurtmalar botiga admin qilib qo'shildingiz! Endi sizga ham yangi buyurtmalar kelib turadi.", { reply_markup: adminKeyboard });
+            } catch (err) {
+                console.log('Could not notify new admin in Telegram:', err.message);
+            }
             return;
         }
 
         if (command === '/removeadmin') {
             if (!(await isOwner(chatId))) {
-                await sendMessage(chatId, "Admin o'chirish faqat bot yaratuvchisiga ruxsat.");
+                await sendMessage(chatId, "❌ Admin o'chirish faqat bot yaratuvchisi (Owner) ga ruxsat berilgan.");
                 return;
             }
 
             const adminId = args[0];
             if (!adminId) {
-                await sendMessage(chatId, 'Format: /removeadmin CHAT_ID');
+                await sendMessage(chatId, '❌ Format xato! To\'g'ri format:\n<code>/removeadmin CHAT_ID</code>');
                 return;
             }
 
             await AdminModel.deleteOne({ chat_id: String(adminId) });
-            await sendMessage(chatId, `Admin olib tashlandi: <code>${escapeHtml(adminId)}</code>`);
+            await sendMessage(chatId, `✅ Admin olib tashlandi: <code>${escapeHtml(adminId)}</code>`, { reply_markup: adminKeyboard });
             return;
         }
 
-        await sendMessage(chatId, "Noma'lum buyruq. /admin ni bosing.");
+        await sendMessage(chatId, "Noma'lum buyruq. Quyidagi menyu tugmalaridan foydalaning:", { reply_markup: adminKeyboard });
     };
 
     const poll = async () => {
@@ -285,3 +359,4 @@ export const getTelegramConfig = () => ({
     ownerIds: parseIdList(process.env.TELEGRAM_BOT_OWNER_IDS),
     envAdminIds: parseIdList(process.env.TELEGRAM_ADMIN_CHAT_IDS)
 });
+
