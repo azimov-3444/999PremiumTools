@@ -1,8 +1,8 @@
 import axios from 'axios';
 import { supabase } from '../supabase';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
-const FALLBACK_API_URL = import.meta.env.VITE_FALLBACK_API_URL || 'https://nine99-premiumtools.onrender.com/api';
+const API_URL = import.meta.env.VITE_API_URL || 'https://nine99premiumtools.onrender.com/api';
+const FALLBACK_API_URL = import.meta.env.VITE_FALLBACK_API_URL || 'https://nine99premiumtools.onrender.com/api';
 const ORDER_API_URL = import.meta.env.VITE_ORDER_API_URL || API_URL;
 
 const api = axios.create({
