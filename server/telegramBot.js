@@ -259,7 +259,7 @@ export const createTelegramBot = ({ token, ownerIds = [], envAdminIds = [], Admi
             const newAdminId = args[0];
             const name = args.slice(1).join(' ');
             if (!newAdminId) {
-                await sendMessage(chatId, '❌ Format xato! To\'g'ri format:\n<code>/addadmin CHAT_ID Ismi</code>\n\nMisol:\n<code>/addadmin 7063153677 Humoyun</code>');
+                await sendMessage(chatId, `❌ Format xato! To'g'ri format:\n<code>/addadmin CHAT_ID Ismi</code>\n\nMisol:\n<code>/addadmin 7063153677 Humoyun</code>`);
                 return;
             }
 
@@ -282,7 +282,7 @@ export const createTelegramBot = ({ token, ownerIds = [], envAdminIds = [], Admi
 
             const adminId = args[0];
             if (!adminId) {
-                await sendMessage(chatId, '❌ Format xato! To\'g'ri format:\n<code>/removeadmin CHAT_ID</code>');
+                await sendMessage(chatId, `❌ Format xato! To'g'ri format:\n<code>/removeadmin CHAT_ID</code>`);
                 return;
             }
 
