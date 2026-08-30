@@ -140,11 +140,11 @@ const ProductModal = ({ product, onClose, onAddToCart, onToggleFavourite, isFavo
 
     return (
         <div
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-950/70 p-2 sm:p-4 lg:p-6 backdrop-blur-md transition-opacity duration-300"
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-950/75 p-2 sm:p-4 md:p-6 backdrop-blur-md transition-opacity duration-300"
             onClick={onClose}
         >
             <article
-                className="relative flex flex-col w-full max-h-[92dvh] sm:max-h-[88dvh] max-w-full sm:max-w-2xl lg:max-w-5xl xl:max-w-6xl overflow-hidden rounded-2xl bg-white shadow-[0_25px_70px_rgba(15,23,42,0.35)] ring-1 ring-gray-900/10 transition-all duration-300"
+                className="relative flex flex-col w-[96vw] sm:w-[92vw] md:w-[90vw] max-w-6xl max-h-[92dvh] md:max-h-[88dvh] overflow-hidden rounded-2xl bg-white shadow-[0_25px_70px_rgba(15,23,42,0.4)] ring-1 ring-gray-900/10 transition-all duration-300"
                 onClick={(event) => event.stopPropagation()}
             >
                 {/* Header */}
@@ -155,7 +155,7 @@ const ProductModal = ({ product, onClose, onAddToCart, onToggleFavourite, isFavo
                         </div>
                         <div className="min-w-0">
                             <p className="text-[10px] font-black uppercase tracking-wider text-primary">999 Premium Tools</p>
-                            <h2 className="truncate text-base font-black text-gray-900 sm:text-lg">{productName}</h2>
+                            <h2 className="truncate text-sm sm:text-base font-black text-gray-900">{productName}</h2>
                         </div>
                     </div>
                     <button
@@ -170,11 +170,11 @@ const ProductModal = ({ product, onClose, onAddToCart, onToggleFavourite, isFavo
                 </header>
 
                 {/* Content Container */}
-                <div className="flex-1 overflow-y-auto scrollbar-soft bg-gradient-to-b from-gray-50/70 via-white to-gray-50/40 p-4 sm:p-6 lg:p-8">
-                    <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:gap-8 items-start">
+                <div className="flex-1 overflow-y-auto scrollbar-soft bg-gradient-to-b from-gray-50/70 via-white to-gray-50/40 p-4 sm:p-6 md:p-8">
+                    <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8 items-start">
                         {/* Left Column: Image Gallery */}
-                        <div className="lg:col-span-6 flex flex-col gap-3">
-                            <div className="relative flex h-64 sm:h-80 lg:h-[400px] w-full items-center justify-center overflow-hidden rounded-2xl border border-gray-100 bg-[radial-gradient(circle_at_25%_0%,rgba(220,38,38,0.08),transparent_40%),linear-gradient(135deg,#ffffff,#f1f5f9)] shadow-sm">
+                        <div className="md:col-span-6 lg:col-span-5 flex flex-col gap-3">
+                            <div className="relative flex h-60 sm:h-72 md:h-[340px] lg:h-[380px] w-full items-center justify-center overflow-hidden rounded-2xl border border-gray-100 bg-[radial-gradient(circle_at_25%_0%,rgba(220,38,38,0.08),transparent_40%),linear-gradient(135deg,#ffffff,#f1f5f9)] shadow-sm">
                                 <div className="absolute inset-0 opacity-40 [background-image:linear-gradient(rgba(15,23,42,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(15,23,42,0.04)_1px,transparent_1px)] [background-size:32px_32px]" />
 
                                 {/* Badges */}
@@ -195,7 +195,7 @@ const ProductModal = ({ product, onClose, onAddToCart, onToggleFavourite, isFavo
                                     <img
                                         src={currentImage.url}
                                         alt={productName}
-                                        className="h-full w-full object-contain p-4 sm:p-6 drop-shadow-[0_12px_24px_rgba(15,23,42,0.15)] transition-transform duration-300 hover:scale-105"
+                                        className="h-full w-full object-contain p-3 sm:p-5 drop-shadow-[0_12px_24px_rgba(15,23,42,0.15)] transition-transform duration-300 hover:scale-105"
                                         onError={() => handleImageError(currentImage.url)}
                                     />
                                 ) : (
@@ -237,7 +237,7 @@ const ProductModal = ({ product, onClose, onAddToCart, onToggleFavourite, isFavo
                                         <button
                                             key={image.url}
                                             onClick={() => setActiveImage(index)}
-                                            className={`h-16 w-16 flex-shrink-0 overflow-hidden rounded-xl border bg-white shadow-sm transition ${index === safeImageIndex
+                                            className={`h-14 w-14 sm:h-16 sm:w-16 flex-shrink-0 overflow-hidden rounded-xl border bg-white shadow-sm transition ${index === safeImageIndex
                                                 ? 'border-primary ring-2 ring-red-400'
                                                 : 'border-gray-200 opacity-70 hover:opacity-100'
                                                 }`}
@@ -256,15 +256,15 @@ const ProductModal = ({ product, onClose, onAddToCart, onToggleFavourite, isFavo
                         </div>
 
                         {/* Right Column: Title, Quick Stats, Tabs (Description/Reviews), Actions */}
-                        <div className="lg:col-span-6 flex flex-col justify-between space-y-4">
+                        <div className="md:col-span-6 lg:col-span-7 flex flex-col justify-between space-y-4 min-w-0">
                             <div>
                                 {/* Title */}
-                                <h1 className="text-xl font-black leading-tight text-gray-950 sm:text-2xl lg:text-3xl">
+                                <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-black leading-snug text-gray-950 break-words">
                                     {productName}
                                 </h1>
 
                                 {/* Rating */}
-                                <div className="mt-2.5 flex flex-wrap items-center gap-2">
+                                <div className="mt-2 flex flex-wrap items-center gap-2">
                                     {renderStars(Math.round(averageRating))}
                                     <span className="text-sm font-black text-gray-900">
                                         {averageRating > 0 ? averageRating.toFixed(1) : t.common.noResults}
@@ -322,10 +322,10 @@ const ProductModal = ({ product, onClose, onAddToCart, onToggleFavourite, isFavo
                                 {/* Tab Content Panel */}
                                 <div className="mt-3">
                                     {activeTab === 'details' ? (
-                                        <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm min-h-[140px] max-h-[220px] overflow-y-auto scrollbar-soft">
+                                        <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm min-h-[120px] max-h-[220px] overflow-y-auto scrollbar-soft">
                                             <h3 className="mb-1.5 text-xs font-black uppercase tracking-wider text-gray-400">{t.productModal.description}</h3>
                                             {productDescription ? (
-                                                <p className="text-xs sm:text-sm leading-relaxed text-gray-700 whitespace-pre-line">
+                                                <p className="text-xs sm:text-sm leading-relaxed text-gray-700 whitespace-pre-line break-words">
                                                     {productDescription}
                                                 </p>
                                             ) : (
@@ -333,7 +333,7 @@ const ProductModal = ({ product, onClose, onAddToCart, onToggleFavourite, isFavo
                                             )}
                                         </div>
                                     ) : (
-                                        <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm min-h-[140px]">
+                                        <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm min-h-[120px]">
                                             <div className="mb-3 flex items-center justify-between gap-2">
                                                 <h3 className="text-xs font-black uppercase tracking-wider text-gray-400">
                                                     {t.productModal.reviews} ({reviews.length})
@@ -406,7 +406,7 @@ const ProductModal = ({ product, onClose, onAddToCart, onToggleFavourite, isFavo
                                                                 </div>
                                                                 {renderStars(review.rating)}
                                                             </div>
-                                                            <p className="text-xs text-gray-700 leading-relaxed">{review.comment}</p>
+                                                            <p className="text-xs text-gray-700 leading-relaxed break-words">{review.comment}</p>
                                                         </div>
                                                     ))}
                                                 </div>
