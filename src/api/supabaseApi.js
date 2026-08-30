@@ -398,10 +398,16 @@ export const createOrder = async (orderData) => {
         const res = await orderApi.post('/orders', orderData);
         return res.data;
     } catch (error) {
-        if (error.code === 'ERR_NETWORK' || error.message === 'Network Error') {
-            throw new Error('Order API is not running. Start backend with: npm run server');
+        console.warn('Primary order API failed, trying fallback API...', error.message);
+        try {
+            const fallbackRes = await fallbackApi.post('/orders', orderData);
+            return fallbackRes.data;
+        } catch (fallbackError) {
+            if (error.code === 'ERR_NETWORK' || error.message === 'Network Error') {
+                throw new Error('Order API is not running.');
+            }
+            throw fallbackError || error;
         }
-        throw error;
     }
 };
 
