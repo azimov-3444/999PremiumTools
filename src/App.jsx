@@ -1,5 +1,7 @@
 import { lazy, Suspense, useState, useEffect, useMemo } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
+import { App as CapApp } from '@capacitor/app';
+import { StatusBar, Style } from '@capacitor/status-bar';
 import * as api from './api/supabaseApi';
 import { hashPassword } from './utils/passwordUtils';
 import Navbar from './components/Navbar';
@@ -105,6 +107,35 @@ function AppContent() {
   useEffect(() => {
     localStorage.setItem('cart', JSON.stringify(cart));
   }, [cart]);
+
+  // Handle Capacitor native back button & status bar
+  useEffect(() => {
+    try {
+      StatusBar.setStyle({ style: Style.Dark }).catch(() => {});
+      StatusBar.setBackgroundColor({ color: '#1e293b' }).catch(() => {});
+    } catch (e) {
+      // Non-native fallback
+    }
+
+    let backListener;
+    try {
+      backListener = CapApp.addListener('backButton', ({ canGoBack }) => {
+        if (location.pathname === '/' || location.pathname === '' || !canGoBack) {
+          CapApp.exitApp();
+        } else {
+          navigate(-1);
+        }
+      });
+    } catch (e) {
+      // Non-native fallback
+    }
+
+    return () => {
+      if (backListener) {
+        backListener.then((handler) => handler && handler.remove && handler.remove()).catch(() => {});
+      }
+    };
+  }, [location.pathname, navigate]);
 
   // Load only storefront data on initial page load.
   const loadPublicData = async () => {

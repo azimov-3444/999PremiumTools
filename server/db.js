@@ -10,11 +10,13 @@ dotenv.config({ path: path.join(__dirname, '../.env') });
 const MONGO_URI = process.env.MONGO_URI || process.env.MONGODB_URI || 'mongodb+srv://Kyro_Project:azimov_3444@cluster0.mgauugq.mongodb.net/premium_tools_db?retryWrites=true&w=majority&appName=Cluster0';
 
 export const connectDB = async () => {
+    if (mongoose.connection.readyState >= 1) {
+        return;
+    }
     try {
         await mongoose.connect(MONGO_URI);
         console.log('MongoDB Connected to premium_tools_db');
     } catch (error) {
         console.error('MongoDB connection error:', error);
-        process.exit(1);
     }
 };

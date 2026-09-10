@@ -27,28 +27,96 @@ const getPublic = async (endpoint) => {
     }
 };
 
-// Helper: Upload image to Supabase Storage (Keeping this as is because MongoDB is not for file storage)
+// Helper to compress image file to small Data URL if Supabase storage fails or is unavailable
+export const compressImageFile = async (file, maxWidth = 1200, maxHeight = 1200, quality = 0.8) => {
+    if (!file) return '';
+    if (typeof file === 'string') return file;
+
+    return new Promise((resolve) => {
+        if (typeof window === 'undefined' || !(file instanceof Blob)) {
+            const reader = new FileReader();
+            reader.onload = (e) => resolve(e.target?.result || '');
+            reader.onerror = () => resolve('');
+            reader.readAsDataURL(file);
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+                let width = img.width;
+                let height = img.height;
+
+                if (width > maxWidth || height > maxHeight) {
+                    if (width > height) {
+                        height = Math.round((height * maxWidth) / width);
+                        width = maxWidth;
+                    } else {
+                        width = Math.round((width * maxHeight) / height);
+                        height = maxHeight;
+                    }
+                }
+
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+
+                const dataUrl = canvas.toDataURL('image/jpeg', quality);
+                resolve(dataUrl);
+            };
+            img.onerror = () => resolve(e.target?.result || '');
+            img.src = e.target.result;
+        };
+        reader.onerror = () => resolve('');
+        reader.readAsDataURL(file);
+    });
+};
+
+// Helper: Upload image to Supabase Storage (with retry and Data URL fallback)
 export const uploadImage = async (file, bucket = 'products') => {
-    const fileExt = file.name.split('.').pop();
+    if (!file) return '';
+    if (typeof file === 'string') return file;
+
+    const fileExt = file.name ? file.name.split('.').pop() : 'jpg';
     const fileName = `${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
     const filePath = `${fileName}`;
 
-    const { error } = await supabase.storage
-        .from(bucket)
-        .upload(filePath, file);
+    let lastError = null;
 
-    if (error) {
-        if (error.message === 'Bucket not found') {
-            throw new Error(`Supabase-da '${bucket}' nomli bucket topilmadi. Iltimos, Supabase Dashboard → Storage bo'limida '${bucket}' nomli public bucket yarating.`);
+    // Try Supabase storage upload with up to 2 attempts
+    for (let attempt = 1; attempt <= 2; attempt++) {
+        try {
+            const { data, error } = await supabase.storage
+                .from(bucket)
+                .upload(filePath, file, { upsert: true });
+
+            if (!error && data) {
+                const { data: { publicUrl } } = supabase.storage
+                    .from(bucket)
+                    .getPublicUrl(filePath);
+                if (publicUrl) return publicUrl;
+            } else if (error) {
+                lastError = error;
+            }
+        } catch (err) {
+            lastError = err;
         }
-        throw error;
+
+        if (attempt < 2) {
+            await new Promise((r) => setTimeout(r, 800));
+        }
     }
 
-    const { data: { publicUrl } } = supabase.storage
-        .from(bucket)
-        .getPublicUrl(filePath);
+    console.warn(`Supabase storage error/timeout for bucket '${bucket}', using compressed image data URL fallback:`, lastError);
 
-    return publicUrl;
+    // Fallback: compress image file and return base64 Data URL
+    const fallbackUrl = await compressImageFile(file);
+    if (fallbackUrl) return fallbackUrl;
+
+    throw lastError || new Error("Rasm yuklashda kutilmagan xatolik yuz berdi");
 };
 
 // Converters (same as before but some might not be needed if DB returns them correctly)

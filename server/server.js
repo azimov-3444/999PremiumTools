@@ -17,7 +17,15 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-connectDB();
+app.use(async (req, res, next) => {
+    try {
+        await connectDB();
+        next();
+    } catch (err) {
+        console.error('DB middleware connection error:', err);
+        next(err);
+    }
+});
 
 // ==================== HEALTH CHECK FOR UPTIMEROBOT ====================
 app.get(['/', '/health', '/api/health'], (req, res) => {
@@ -374,14 +382,18 @@ app.get('/api/orders', async (req, res) => {
     }
 });
 
-const PORT = process.env.PORT || 8000;
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-    const shouldStartBot = process.env.TELEGRAM_BOT_TOKEN && process.env.START_TELEGRAM_BOT_IN_SERVER !== 'false';
-    if (shouldStartBot) {
-        console.log('Starting Telegram bot polling...');
-        telegramBot.start();
-    } else {
-        console.log('Telegram bot polling skipped (token missing or START_TELEGRAM_BOT_IN_SERVER=false).');
-    }
-});
+if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
+    const PORT = process.env.PORT || 8000;
+    app.listen(PORT, () => {
+        console.log(`Server running on port ${PORT}`);
+        const shouldStartBot = process.env.TELEGRAM_BOT_TOKEN && process.env.START_TELEGRAM_BOT_IN_SERVER !== 'false';
+        if (shouldStartBot) {
+            console.log('Starting Telegram bot polling...');
+            telegramBot.start();
+        } else {
+            console.log('Telegram bot polling skipped (token missing or START_TELEGRAM_BOT_IN_SERVER=false).');
+        }
+    });
+}
+
+export default app;
