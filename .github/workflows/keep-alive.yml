@@ -1,0 +1,17 @@
+name: Keep Supabase Alive
+
+on:
+  schedule:
+    # Har 3 kunda bir marta soat 00:00 UTC da ishga tushadi
+    - cron: '0 0 */3 * *'
+  workflow_dispatch: # GitHub panelidan qo'lda ham sinab ko'rish imkoniyati
+
+jobs:
+  ping-supabase:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send keep-alive request to Supabase
+        run: |
+          curl -f -s -o /dev/null -w "Status Code: %{http_code}\n" \
+            "${{ secrets.SUPABASE_URL }}/rest/v1/" \
+            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}"
