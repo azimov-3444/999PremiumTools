@@ -1,8 +1,8 @@
 import axios from 'axios';
 import { supabase } from '../supabase';
 
-const API_URL = import.meta.env.VITE_API_URL || '/api';
-const FALLBACK_API_URL = import.meta.env.VITE_FALLBACK_API_URL || '/api';
+const API_URL = import.meta.env.VITE_API_URL || 'https://999-premium-tools.vercel.app/api';
+const FALLBACK_API_URL = import.meta.env.VITE_FALLBACK_API_URL || 'https://999-premium-tools.vercel.app/api';
 const ORDER_API_URL = import.meta.env.VITE_ORDER_API_URL || API_URL;
 
 const api = axios.create({
